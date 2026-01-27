@@ -1,0 +1,396 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Phase 2: Authentication & Authorization Models
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+// Phase 14: OAuth Provider
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  MICROSOFT
+}
+
+// Phase 6: Order Status
+enum OrderStatus {
+  CREATED
+  PAYMENT_PENDING
+  PAYMENT_FAILED
+  PAID
+  CANCELLED
+}
+
+// Phase 7: Payment Gateway
+enum PaymentGateway {
+  RAZORPAY
+}
+
+// Phase 7: Payment Status
+enum PaymentStatus {
+  CREATED
+  INITIATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+// Phase 12: Shipment Status
+enum ShipmentStatus {
+  PENDING
+  SHIPPED
+  IN_TRANSIT
+  DELIVERED
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  password     String?      // Nullable for OAuth users
+  role         Role         @default(CUSTOMER)
+  
+  // Phase 14: OAuth Support
+  provider     AuthProvider @default(LOCAL)
+  providerId   String?      @unique
+  
+  refreshToken String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Phase 3: Relations
+  profile      Profile?
+  addresses    Address[]
+
+  // Phase 5: Shopping Cart
+  cart         Cart?
+
+  // Phase 6: Orders
+  orders       Order[]
+
+  // Phase 7: Payments
+  payments     Payment[]
+
+  // Phase 11: File Access Logs
+  fileAccessLogs FileAccessLog[]
+
+  // Phase 15: Password Reset
+  passwordResetTokens PasswordResetToken[]
+
+  @@map("users")
+}
+
+// Phase 15: Password Reset Token
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  token     String    @unique // Hashed token (bcrypt)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+// Phase 3: User Profile (Non-auth data)
+model Profile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  fullName  String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+// Phase 3: User Addresses
+model Address {
+  id         String   @id @default(uuid())
+  userId     String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  postalCode String
+  country    String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("addresses")
+}
+
+// Phase 4: Product Catalog
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  basePrice   Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  models      ProductModel[]
+  materials   Material[]
+
+  // Phase 5: Cart Items
+  cartItems   CartItem[]
+
+  @@map("products")
+}
+
+// Phase 4: 3D Model Metadata (NOT the file itself)
+model ProductModel {
+  id        String   @id @default(uuid())
+  productId String
+  fileName  String
+  fileUrl   String
+  fileType  String
+  fileSize  Int
+  createdAt DateTime @default(now())
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_models")
+}
+
+// Phase 4: Material & Pricing Options
+model Material {
+  id        String   @id @default(uuid())
+  productId String
+  name      String
+  price     Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  // Phase 5: Cart Items
+  cartItems CartItem[]
+
+  @@map("materials")
+}
+
+// Phase 5: Shopping Cart (One per user)
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  items     CartItem[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("carts")
+}
+
+// Phase 5: Cart Items (Validated References)
+model CartItem {
+  id         String   @id @default(uuid())
+  cartId     String
+  productId  String
+  materialId String
+  quantity   Int      @default(1)
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  cart       Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id])
+  material   Material @relation(fields: [materialId], references: [id])
+
+  @@unique([cartId, productId, materialId])
+  @@map("cart_items")
+}
+
+// Phase 6: Orders (Immutable Financial Records)
+model Order {
+  id        String      @id @default(uuid())
+  userId    String
+  status    OrderStatus @default(CREATED)
+
+  subtotal  Decimal     @db.Decimal(10, 2)
+  total     Decimal     @db.Decimal(10, 2)
+
+  idempotencyKey String @unique
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  items     OrderItem[]
+  address   OrderAddress?
+  payment   Payment?
+  invoice   Invoice?
+
+  // Phase 11: File Access Logs
+  fileAccessLogs FileAccessLog[]
+
+  // Phase 12: Shipment
+  shipment  Shipment?
+
+  user      User        @relation(fields: [userId], references: [id])
+
+  @@map("orders")
+}
+
+// Phase 6: Order Items (IMMUTABLE SNAPSHOT)
+model OrderItem {
+  id            String   @id @default(uuid())
+  orderId       String
+
+  productId     String
+  productName   String
+  basePrice     Decimal  @db.Decimal(10, 2)
+
+  materialId    String
+  materialName  String
+  materialPrice Decimal  @db.Decimal(10, 2)
+
+  quantity      Int
+
+  itemPrice     Decimal  @db.Decimal(10, 2)
+  lineTotal     Decimal  @db.Decimal(10, 2)
+
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+// Phase 6: Order Address (SNAPSHOT)
+model OrderAddress {
+  id          String   @id @default(uuid())
+  orderId     String   @unique
+
+  fullName    String
+  phone       String
+  line1       String
+  line2       String?
+  city        String
+  state       String
+  postalCode  String
+  country     String
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_addresses")
+}
+
+// Phase 7: Payment Records (Mutable - Gateway Updates)
+model Payment {
+  id              String         @id @default(uuid())
+  orderId         String         @unique
+  userId          String
+  
+  gateway         PaymentGateway @default(RAZORPAY)
+  
+  amount          Decimal        @db.Decimal(10, 2)
+  currency        String         @default("INR")
+  
+  razorpayOrderId   String?      @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  
+  status          PaymentStatus  @default(CREATED)
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  
+  order           Order          @relation(fields: [orderId], references: [id])
+  user            User           @relation(fields: [userId], references: [id])
+
+  @@map("payments")
+}
+
+// Phase 10: Invoice Records (Read-Only, Generated from Order Snapshots)
+model Invoice {
+  id            String   @id @default(uuid())
+  orderId       String   @unique
+  
+  invoiceNumber String   @unique
+  invoiceUrl    String
+  
+  issuedAt      DateTime @default(now())
+  
+  order         Order    @relation(fields: [orderId], references: [id])
+
+  @@map("invoices")
+}
+
+// Phase 11: File Access Audit Log (Security & Traceability)
+model FileAccessLog {
+  id          String   @id @default(uuid())
+  userId      String
+  orderId     String
+  fileId      String
+  ipAddress   String?
+  
+  accessedAt  DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id])
+  order       Order    @relation(fields: [orderId], references: [id])
+
+  @@map("file_access_logs")
+}
+
+// Phase 12: Shipment Tracking (Logistics Layer)
+model Shipment {
+  id              String          @id @default(uuid())
+  orderId         String          @unique
+  courierName     String
+  trackingNumber  String          @unique
+  status          ShipmentStatus  @default(PENDING)
+  
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  order           Order           @relation(fields: [orderId], references: [id])
+
+  @@map("shipments")
+}
+
+// Phase 13: Audit Logging (Security & Compliance)
+model AuditLog {
+  id        String   @id @default(uuid())
+  actorId   String?
+  role      Role?
+  action    String
+  entity    String
+  entityId  String?
+  ip        String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
