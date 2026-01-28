@@ -15,13 +15,24 @@ export class RazorpayService {
     this.webhookSecret = this.configService.get<string>('razorpay.webhookSecret') || '';
 
     if (!keyId || !keySecret) {
-      this.logger.warn('⚠️  Razorpay credentials not configured');
+      this.logger.warn('⚠️  Razorpay credentials not configured. Payment operations will fail until configured.');
     }
 
+    // Initialize Razorpay even with empty credentials to prevent crashes
+    // Actual operations will fail with meaningful errors if not configured
     this.razorpay = new Razorpay({
-      key_id: keyId || '',
-      key_secret: keySecret || '',
+      key_id: keyId || 'not_configured',
+      key_secret: keySecret || 'not_configured',
     });
+  }
+
+  /**
+   * Check if Razorpay is properly configured
+   */
+  private isConfigured(): boolean {
+    const keyId = this.configService.get<string>('razorpay.keyId');
+    const keySecret = this.configService.get<string>('razorpay.keySecret');
+    return !!(keyId && keySecret && keyId !== 'not_configured');
   }
 
   /**
@@ -29,6 +40,10 @@ export class RazorpayService {
    * Amount must be in paise (smallest currency unit)
    */
   async createOrder(orderId: string, amount: number, currency: string = 'INR') {
+    if (!this.isConfigured()) {
+      throw new Error('Razorpay is not configured. Please set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET environment variables.');
+    }
+
     try {
       // Amount is expected in paise (multiply by 100)
       const amountInPaise = Math.round(amount * 100);

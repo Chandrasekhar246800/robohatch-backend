@@ -35,7 +35,7 @@ export class HealthController {
   /**
    * Readiness probe
    * Returns 200 if the application is ready to accept traffic
-   * Checks dependencies: DB, Razorpay, SMTP, S3
+   * Checks dependencies: DB (critical), Razorpay, SMTP, S3 (optional)
    */
   @Public()
   @Get('ready')
@@ -47,18 +47,25 @@ export class HealthController {
       s3: this.checkS3(),
     };
 
-    const allHealthy = Object.values(checks).every((check) => check.healthy);
+    // Only database is critical for readiness
+    // Other services (Razorpay, SMTP, S3) are optional features
+    const criticalHealthy = checks.database.healthy;
 
-    if (!allHealthy) {
+    if (!criticalHealthy) {
       throw new ServiceUnavailableException({
-        status: 'degraded',
+        status: 'not_ready',
         checks,
         timestamp: new Date().toISOString(),
+        message: 'Database connection required',
       });
     }
 
+    // Determine overall status
+    const allHealthy = Object.values(checks).every((check) => check.healthy);
+    const status = allHealthy ? 'ready' : 'degraded';
+
     return {
-      status: 'ready',
+      status,
       checks,
       timestamp: new Date().toISOString(),
       environment: this.configService.get<string>('app.nodeEnv'),
