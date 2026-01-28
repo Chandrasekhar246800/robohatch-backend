@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { UsersModule } from '../users/users.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
@@ -14,6 +15,7 @@ import { MicrosoftOAuthService } from './oauth/microsoft-oauth.service';
 @Module({
   imports: [
     UsersModule,
+    NotificationsModule,
     PassportModule,
     JwtModule.registerAsync({
       inject: [ConfigService],
