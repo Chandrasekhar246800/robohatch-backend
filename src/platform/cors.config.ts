@@ -24,7 +24,10 @@ export const getCorsConfig = (isDevelopment: boolean): CorsOptions => {
   }
 
   // PRODUCTION: Strict whitelist
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+    'https://robohatch.in',
+    'https://www.robohatch.in',
+  ];
 
   if (allowedOrigins.length === 0) {
     throw new Error('ALLOWED_ORIGINS must be set in production');
