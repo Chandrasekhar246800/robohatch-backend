@@ -8,7 +8,7 @@ datasource db {
 }
 
 model User {
-  id           String         @id
+  id           String         @id @default(cuid())
   email        String         @unique(map: "email")
   password     String?
   role         users_role     @default(CUSTOMER)
@@ -16,38 +16,41 @@ model User {
   provider     users_provider @default(LOCAL)
   providerId   String?        @unique
   refreshToken String?
-  updatedAt    DateTime
+  updatedAt    DateTime       @updatedAt
+  profile      profiles?
+  orders       Order[]
 
   @@map("users")
 }
 
 model Product {
-  id          String   @id
+  id          String   @id @default(cuid())
   name        String
   description String?
   basePrice   Float
   createdAt   DateTime @default(now())
   isActive    Boolean  @default(true)
-  updatedAt   DateTime
+  updatedAt   DateTime @updatedAt
 
   @@map("products")
 }
 
 model Order {
-  id             String        @id
+  id             String        @id @default(cuid())
   status         orders_status @default(CREATED)
   createdAt      DateTime      @default(now())
   idempotencyKey String        @unique
   subtotal       Decimal       @db.Decimal(10, 2)
   total          Decimal       @db.Decimal(10, 2)
-  updatedAt      DateTime
+  updatedAt      DateTime      @updatedAt
   userId         String
+  user           User          @relation(fields: [userId], references: [id])
 
   @@map("orders")
 }
 
 model OrderItem {
-  id            String  @id
+  id            String  @id @default(cuid())
   quantity      Int
   basePrice     Decimal @db.Decimal(10, 2)
   itemPrice     Decimal @db.Decimal(10, 2)
@@ -63,7 +66,7 @@ model OrderItem {
 }
 
 model addresses {
-  id         String   @id
+  id         String   @id @default(cuid())
   userId     String
   line1      String
   line2      String?
@@ -73,11 +76,11 @@ model addresses {
   country    String
   isDefault  Boolean  @default(false)
   createdAt  DateTime @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
 }
 
 model audit_logs {
-  id        String           @id
+  id        String           @id @default(cuid())
   actorId   String?
   role      audit_logs_role?
   action    String
@@ -94,26 +97,26 @@ model audit_logs {
 }
 
 model cart_items {
-  id         String   @id
+  id         String   @id @default(cuid())
   cartId     String
   productId  String
   materialId String
   quantity   Int      @default(1)
   createdAt  DateTime @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime @updatedAt
 
   @@unique([cartId, productId, materialId])
 }
 
 model carts {
-  id        String   @id
+  id        String   @id @default(cuid())
   userId    String   @unique
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 }
 
 model file_access_logs {
-  id         String   @id
+  id         String   @id @default(cuid())
   userId     String
   orderId    String
   fileId     String
@@ -122,7 +125,7 @@ model file_access_logs {
 }
 
 model invoices {
-  id            String   @id
+  id            String   @id @default(cuid())
   orderId       String   @unique
   invoiceNumber String   @unique
   invoiceUrl    String
@@ -130,17 +133,17 @@ model invoices {
 }
 
 model materials {
-  id        String   @id
+  id        String   @id @default(cuid())
   productId String
   name      String
   price     Float
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
 }
 
 model order_addresses {
-  id         String  @id
+  id         String  @id @default(cuid())
   orderId    String  @unique
   fullName   String
   phone      String
@@ -153,7 +156,7 @@ model order_addresses {
 }
 
 model password_reset_tokens {
-  id        String    @id
+  id        String    @id @default(cuid())
   userId    String
   token     String    @unique
   expiresAt DateTime
@@ -165,7 +168,7 @@ model password_reset_tokens {
 }
 
 model payments {
-  id                String           @id
+  id                String           @id @default(cuid())
   orderId           String           @unique
   userId            String
   gateway           payments_gateway @default(RAZORPAY)
@@ -176,11 +179,11 @@ model payments {
   razorpaySignature String?
   status            payments_status  @default(CREATED)
   createdAt         DateTime         @default(now())
-  updatedAt         DateTime
+  updatedAt         DateTime         @updatedAt
 }
 
 model product_models {
-  id        String   @id
+  id        String   @id @default(cuid())
   productId String
   fileName  String
   fileUrl   String
@@ -190,16 +193,17 @@ model product_models {
 }
 
 model profiles {
-  id        String   @id
+  id        String   @id @default(cuid())
   userId    String   @unique
   fullName  String?
   phone     String?
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model shipments {
-  id             String           @id
+  id             String           @id @default(cuid())
   orderId        String           @unique
   courierName    String
   trackingNumber String           @unique
@@ -207,7 +211,7 @@ model shipments {
   shippedAt      DateTime?
   deliveredAt    DateTime?
   createdAt      DateTime         @default(now())
-  updatedAt      DateTime
+  updatedAt      DateTime         @updatedAt
 }
 
 enum orders_status {

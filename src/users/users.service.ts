@@ -107,7 +107,7 @@ export class UsersService {
   // Phase 3: Profile Management
   async getProfile(userId: string) {
     // Auto-create profile if it doesn't exist
-    let profile = await this.prisma.profile.findUnique({
+    let profile = await this.prisma.profiles.findUnique({
       where: { userId },
       select: {
         id: true,
@@ -119,7 +119,7 @@ export class UsersService {
     });
 
     if (!profile) {
-      profile = await this.prisma.profile.create({
+      profile = await this.prisma.profiles.create({
         data: { userId },
         select: {
           id: true,
@@ -138,7 +138,7 @@ export class UsersService {
     // Ensure profile exists first
     await this.getProfile(userId);
 
-    return this.prisma.profile.update({
+    return this.prisma.profiles.update({
       where: { userId },
       data: updateProfileDto,
       select: {
@@ -245,3 +245,4 @@ export class UsersService {
     return user;
   }
 }
+
