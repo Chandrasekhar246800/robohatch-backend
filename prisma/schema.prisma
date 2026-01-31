@@ -8,44 +8,52 @@ datasource db {
 }
 
 model User {
-  id           String         @id @default(cuid())
-  email        String         @unique(map: "email")
-  password     String?
-  role         users_role     @default(CUSTOMER)
-  createdAt    DateTime       @default(now())
-  provider     users_provider @default(LOCAL)
-  providerId   String?        @unique
-  refreshToken String?
-  updatedAt    DateTime       @updatedAt
-  profile      profiles?
-  orders       Order[]
+  id                   String                   @id @default(cuid())
+  email                String                   @unique(map: "email")
+  password             String?
+  role                 users_role               @default(CUSTOMER)
+  createdAt            DateTime                 @default(now())
+  provider             users_provider           @default(LOCAL)
+  providerId           String?                  @unique
+  refreshToken         String?
+  updatedAt            DateTime                 @updatedAt
+  profile              profiles?
+  orders               Order[]
+  passwordResetTokens  password_reset_tokens[]
 
   @@map("users")
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   name        String
   description String?
   basePrice   Float
-  createdAt   DateTime @default(now())
-  isActive    Boolean  @default(true)
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime         @default(now())
+  isActive    Boolean          @default(true)
+  updatedAt   DateTime         @updatedAt
+  models      product_models[]
+  materials   materials[]
+  cartItems   cart_items[]
 
   @@map("products")
 }
 
 model Order {
-  id             String        @id @default(cuid())
-  status         orders_status @default(CREATED)
-  createdAt      DateTime      @default(now())
-  idempotencyKey String        @unique
-  subtotal       Decimal       @db.Decimal(10, 2)
-  total          Decimal       @db.Decimal(10, 2)
-  updatedAt      DateTime      @updatedAt
+  id             String           @id @default(cuid())
+  status         orders_status    @default(CREATED)
+  createdAt      DateTime         @default(now())
+  idempotencyKey String           @unique
+  subtotal       Decimal          @db.Decimal(10, 2)
+  total          Decimal          @db.Decimal(10, 2)
+  updatedAt      DateTime         @updatedAt
   userId         String
-  user           User          @relation(fields: [userId], references: [id])
+  user           User             @relation(fields: [userId], references: [id])
   items          OrderItem[]
+  payment        payments?
+  shipment       shipments?
+  invoice        invoices?
+  address        order_addresses?
 
   @@map("orders")
 }
@@ -99,22 +107,26 @@ model audit_logs {
 }
 
 model cart_items {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   cartId     String
   productId  String
   materialId String
-  quantity   Int      @default(1)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  quantity   Int       @default(1)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  cart       carts     @relation(fields: [cartId], references: [id])
+  product    Product   @relation(fields: [productId], references: [id])
+  material   materials @relation(fields: [materialId], references: [id])
 
   @@unique([cartId, productId, materialId])
 }
 
 model carts {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String       @id @default(cuid())
+  userId    String       @unique
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  items     cart_items[]
 }
 
 model file_access_logs {
@@ -132,16 +144,19 @@ model invoices {
   invoiceNumber String   @unique
   invoiceUrl    String
   issuedAt      DateTime @default(now())
+  order         Order    @relation(fields: [orderId], references: [id])
 }
 
 model materials {
-  id        String   @id @default(cuid())
+  id        String       @id @default(cuid())
   productId String
   name      String
   price     Float
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive  Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  product   Product      @relation(fields: [productId], references: [id])
+  cartItems cart_items[]
 }
 
 model order_addresses {
@@ -155,6 +170,7 @@ model order_addresses {
   state      String
   postalCode String
   country    String
+  order      Order   @relation(fields: [orderId], references: [id])
 }
 
 model password_reset_tokens {
@@ -164,6 +180,7 @@ model password_reset_tokens {
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id])
 
   @@index([expiresAt])
   @@index([userId])
@@ -182,6 +199,7 @@ model payments {
   status            payments_status  @default(CREATED)
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+  order             Order            @relation(fields: [orderId], references: [id])
 }
 
 model product_models {
@@ -192,6 +210,7 @@ model product_models {
   fileType  String
   fileSize  Int
   createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
 }
 
 model profiles {
@@ -214,6 +233,7 @@ model shipments {
   deliveredAt    DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
+  order          Order            @relation(fields: [orderId], references: [id])
 }
 
 enum orders_status {

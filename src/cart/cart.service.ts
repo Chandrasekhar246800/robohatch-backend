@@ -79,7 +79,7 @@ export class CartService {
     }
 
     // Validate material exists, belongs to product, and is active
-    const material = await this.prisma.material.findFirst({
+    const material = await this.prisma.materials.findFirst({
       where: {
         id: materialId,
         productId: productId,

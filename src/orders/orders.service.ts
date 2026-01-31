@@ -270,7 +270,7 @@ export class OrdersService {
     }
 
     // Fetch user profile for full name and phone
-    const profile = await this.prisma.profile.findUnique({
+    const profile = await this.prisma.profiles.findUnique({
       where: { userId },
     });
 

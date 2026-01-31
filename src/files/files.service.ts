@@ -81,7 +81,7 @@ export class FilesService {
     const productIds = [...new Set(order.items.map((item) => item.productId))];
 
     // STEP 3: Fetch 3D model files for products in this order
-    const productModels = await this.prisma.productModel.findMany({
+    const productModels = await this.prisma.product_models.findMany({
       where: {
         productId: { in: productIds },
       },
@@ -139,7 +139,7 @@ export class FilesService {
     }
 
     // STEP 2: Verify file exists and belongs to a product in this order
-    const productModel = await this.prisma.productModel.findUnique({
+    const productModel = await this.prisma.product_models.findUnique({
       where: { id: fileId },
       select: {
         id: true,
@@ -197,7 +197,7 @@ export class FilesService {
     ipAddress?: string,
   ): Promise<void> {
     try {
-      await this.prisma.fileAccessLog.create({
+      await this.prisma.file_access_logs.create({
         data: {
           userId,
           orderId,
