@@ -21,11 +21,14 @@ export const envValidationSchema = Joi.object({
     .min(32)
     .required(),
 
+  // Razorpay - optional for development
   RAZORPAY_KEY_ID: Joi.string()
-    .required(),
+    .optional()
+    .default(''),
 
   RAZORPAY_KEY_SECRET: Joi.string()
-    .required(),
+    .optional()
+    .default(''),
 
   // AWS S3 - optional for development, required for production
   AWS_REGION: Joi.string()
