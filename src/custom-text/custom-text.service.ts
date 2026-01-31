@@ -20,7 +20,7 @@ interface CustomTextRequestData {
 @Injectable()
 export class CustomTextService {
   private readonly logger = new Logger(CustomTextService.name);
-  private transporter: nodemailer.Transporter;
+  private transporter!: nodemailer.Transporter;
 
   constructor(
     private prisma: PrismaService,
@@ -93,7 +93,7 @@ export class CustomTextService {
         customizationText: sanitizedText,
         submittedAt: metadata.createdAt,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to process custom text request', error);
 
       if (error.message && error.message.includes('email')) {

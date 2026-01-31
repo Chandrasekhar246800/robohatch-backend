@@ -4,14 +4,14 @@ import { Transform } from 'class-transformer';
 export class CreateCustomTextDto {
   @IsString()
   @IsNotEmpty()
-  productId: string;
+  productId!: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(1)
   @MaxLength(100)
   @Transform(({ value }) => value?.trim())
-  customizationText: string;
+  customizationText!: string;
 
   @IsString()
   @MaxLength(300)

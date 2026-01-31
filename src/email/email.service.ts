@@ -11,7 +11,7 @@ interface SendMailOptions {
 @Injectable()
 export class EmailService implements OnModuleInit {
   private readonly logger = new Logger(EmailService.name);
-  private transporter: nodemailer.Transporter;
+  private transporter!: nodemailer.Transporter;
 
   constructor(private configService: ConfigService) {
     this.initializeTransporter();
@@ -52,7 +52,7 @@ export class EmailService implements OnModuleInit {
     try {
       await this.transporter.verify();
       this.logger.log('✅ SMTP connection verified');
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('❌ SMTP connection failed', error.message);
     }
   }
@@ -75,7 +75,7 @@ export class EmailService implements OnModuleInit {
       });
 
       this.logger.log(`Email sent: ${options.subject} → ${options.to}`);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to send email: ${options.subject}`, error.message);
     }
   }

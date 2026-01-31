@@ -18,7 +18,7 @@ interface FileUploadData {
 @Injectable()
 export class CustomFilesService {
   private readonly logger = new Logger(CustomFilesService.name);
-  private transporter: nodemailer.Transporter;
+  private transporter!: nodemailer.Transporter;
 
   constructor(
     private prisma: PrismaService,
@@ -79,7 +79,7 @@ export class CustomFilesService {
         fileSize: `${fileSizeMB} MB`,
         uploadedAt: metadata.createdAt,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error('Failed to process file upload', error);
 
       if (error.message && error.message.includes('email')) {

@@ -11,12 +11,6 @@ export class PrismaService
     console.log('✅ Prisma connected to MySQL');
   }
 
-  async enableShutdownHooks() {
-    this.$on('beforeExit', async () => {
-      await this.$disconnect();
-    });
-  }
-
   async onModuleDestroy() {
     await this.$disconnect();
   }
