@@ -252,6 +252,19 @@ model custom_file_requests {
   @@index([createdAt])
 }
 
+model custom_text_requests {
+  id                String   @id @default(cuid())
+  userId            String
+  productId         String
+  customizationText String   @db.VarChar(100)
+  notes             String?  @db.VarChar(300)
+  createdAt         DateTime @default(now())
+
+  @@index([userId])
+  @@index([productId])
+  @@index([createdAt])
+}
+
 enum orders_status {
   CREATED
   PAYMENT_PENDING
