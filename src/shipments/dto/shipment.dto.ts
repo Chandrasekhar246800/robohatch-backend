@@ -1,5 +1,5 @@
 import { IsString, IsNotEmpty, IsEnum, IsOptional } from 'class-validator';
-import { ShipmentStatus } from '@prisma/client';
+import { shipments_status as ShipmentStatus } from '@prisma/client';
 
 /**
  * CreateShipmentDto - Phase 12 Shipment Creation
@@ -47,3 +47,4 @@ export class UpdateShipmentDto {
   @IsOptional()
   trackingNumber?: string;
 }
+

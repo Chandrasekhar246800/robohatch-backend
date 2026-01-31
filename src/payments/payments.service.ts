@@ -54,7 +54,7 @@ export class PaymentsService {
     }
 
     // Check if payment already exists (idempotency)
-    const existingPayment = await this.prisma.payment.findUnique({
+    const existingPayment = await this.prisma.payments.findUnique({
       where: { orderId },
     });
 
@@ -77,7 +77,7 @@ export class PaymentsService {
     // Step 2: Atomic DB mutation - Payment + Order status update
     await this.prisma.$transaction(async (tx) => {
       // Create or update Payment record
-      await tx.payment.upsert({
+      await tx.payments.upsert({
         where: { orderId },
         create: {
           orderId,
@@ -154,7 +154,7 @@ export class PaymentsService {
       return;
     }
 
-    const payment = await this.prisma.payment.findUnique({
+    const payment = await this.prisma.payments.findUnique({
       where: { razorpayOrderId },
     });
 
@@ -167,7 +167,7 @@ export class PaymentsService {
       return;
     }
 
-    await this.prisma.payment.update({
+    await this.prisma.payments.update({
       where: { id: payment.id },
       data: {
         status: PaymentStatus.AUTHORIZED,
@@ -188,7 +188,7 @@ export class PaymentsService {
       return;
     }
 
-    const payment = await this.prisma.payment.findUnique({
+    const payment = await this.prisma.payments.findUnique({
       where: { razorpayOrderId },
       include: { 
         order: {
@@ -209,7 +209,7 @@ export class PaymentsService {
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.payment.update({
+      await tx.payments.update({
         where: { id: payment.id },
         data: {
           status: PaymentStatus.CAPTURED,
@@ -245,7 +245,7 @@ export class PaymentsService {
       return;
     }
 
-    const payment = await this.prisma.payment.findUnique({
+    const payment = await this.prisma.payments.findUnique({
       where: { razorpayOrderId },
       include: { order: true },
     });
@@ -265,7 +265,7 @@ export class PaymentsService {
 
     // ATOMIC transaction
     await this.prisma.$transaction(async (tx) => {
-      await tx.payment.update({
+      await tx.payments.update({
         where: { id: payment.id },
         data: {
           status: PaymentStatus.FAILED,
@@ -289,7 +289,7 @@ export class PaymentsService {
    * CUSTOMER can only see their own payments
    */
   async getPaymentByOrderId(orderId: string, userId: string) {
-    const payment = await this.prisma.payment.findUnique({
+    const payment = await this.prisma.payments.findUnique({
       where: { orderId },
       include: {
         order: {
@@ -326,3 +326,4 @@ export class PaymentsService {
     };
   }
 }
+

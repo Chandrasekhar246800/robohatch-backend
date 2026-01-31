@@ -15,7 +15,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
-import { Role } from '@prisma/client';
+import { users_role as Role } from '@prisma/client';
 
 @Controller()
 export class ProductsController {
@@ -66,3 +66,4 @@ export class ProductsController {
     return this.productsService.remove(id);
   }
 }
+

@@ -41,7 +41,7 @@ export class ProductModelsService {
     // Normalize file type to uppercase
     const normalizedFileType = createProductModelDto.fileType.toUpperCase();
 
-    return this.prisma.productModel.create({
+    return this.prisma.product_models.create({
       data: {
         ...createProductModelDto,
         fileType: normalizedFileType,
@@ -59,7 +59,7 @@ export class ProductModelsService {
   }
 
   async findByProduct(productId: string) {
-    return this.prisma.productModel.findMany({
+    return this.prisma.product_models.findMany({
       where: { productId },
       select: {
         id: true,
@@ -74,7 +74,7 @@ export class ProductModelsService {
   }
 
   async remove(modelId: string) {
-    const model = await this.prisma.productModel.findUnique({
+    const model = await this.prisma.product_models.findUnique({
       where: { id: modelId },
     });
 
@@ -82,10 +82,11 @@ export class ProductModelsService {
       throw new NotFoundException('Product model not found');
     }
 
-    await this.prisma.productModel.delete({
+    await this.prisma.product_models.delete({
       where: { id: modelId },
     });
 
     return { message: 'Product model deleted successfully' };
   }
 }
+

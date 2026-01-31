@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotificationsService } from '../notifications/notifications.service';
-import { OrderStatus, ShipmentStatus } from '@prisma/client';
+import { orders_status as OrderStatus, shipments_status as ShipmentStatus } from '@prisma/client';
 import { CreateShipmentDto, UpdateShipmentDto } from './dto/shipment.dto';
 import { ShipmentResponseDto, AdminShipmentListDto } from './dto/shipment-response.dto';
 
@@ -84,7 +84,7 @@ export class ShipmentsService {
     }
 
     // STEP 2: Check if shipment already exists (prevent duplicates)
-    const existingShipment = await this.prisma.shipment.findUnique({
+    const existingShipment = await this.prisma.shipments.findUnique({
       where: { orderId },
     });
 
@@ -95,7 +95,7 @@ export class ShipmentsService {
     }
 
     // STEP 3: Check if tracking number is unique
-    const duplicateTracking = await this.prisma.shipment.findUnique({
+    const duplicateTracking = await this.prisma.shipments.findUnique({
       where: { trackingNumber },
     });
 
@@ -106,7 +106,7 @@ export class ShipmentsService {
     }
 
     // STEP 4: Create shipment (no transaction needed - single write)
-    const shipment = await this.prisma.shipment.create({
+    const shipment = await this.prisma.shipments.create({
       data: {
         orderId,
         courierName,
@@ -153,7 +153,7 @@ export class ShipmentsService {
     const { status, courierName, trackingNumber } = updateShipmentDto;
 
     // STEP 1: Verify shipment exists
-    const existingShipment = await this.prisma.shipment.findUnique({
+    const existingShipment = await this.prisma.shipments.findUnique({
       where: { id: shipmentId },
       include: {
         order: {
@@ -179,7 +179,7 @@ export class ShipmentsService {
 
     // STEP 3: Check tracking number uniqueness (if being changed)
     if (trackingNumber && trackingNumber !== existingShipment.trackingNumber) {
-      const duplicateTracking = await this.prisma.shipment.findUnique({
+      const duplicateTracking = await this.prisma.shipments.findUnique({
         where: { trackingNumber },
       });
 
@@ -211,7 +211,7 @@ export class ShipmentsService {
     }
 
     // STEP 5: Update shipment
-    const shipment = await this.prisma.shipment.update({
+    const shipment = await this.prisma.shipments.update({
       where: { id: shipmentId },
       data: updateData,
     });
@@ -262,7 +262,7 @@ export class ShipmentsService {
     }
 
     // STEP 2: Fetch shipment
-    const shipment = await this.prisma.shipment.findUnique({
+    const shipment = await this.prisma.shipments.findUnique({
       where: { orderId },
     });
 
@@ -279,7 +279,7 @@ export class ShipmentsService {
    * ADMIN operation
    */
   async getShipmentById(shipmentId: string): Promise<ShipmentResponseDto> {
-    const shipment = await this.prisma.shipment.findUnique({
+    const shipment = await this.prisma.shipments.findUnique({
       where: { id: shipmentId },
     });
 
@@ -297,7 +297,7 @@ export class ShipmentsService {
    * Includes user email and order total for admin convenience
    */
   async listAllShipments(): Promise<AdminShipmentListDto[]> {
-    const shipments = await this.prisma.shipment.findMany({
+    const shipments = await this.prisma.shipments.findMany({
       include: {
         order: {
           select: {
@@ -383,3 +383,4 @@ export class ShipmentsService {
     };
   }
 }
+

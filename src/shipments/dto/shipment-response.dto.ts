@@ -1,4 +1,4 @@
-import { ShipmentStatus } from '@prisma/client';
+import { shipments_status as ShipmentStatus } from '@prisma/client';
 
 /**
  * ShipmentResponseDto - Phase 12 Shipment Response
@@ -32,3 +32,4 @@ export class AdminShipmentListDto extends ShipmentResponseDto {
   userEmail?: string;
   orderTotal?: number;
 }
+

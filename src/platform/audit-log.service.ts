@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Role } from '@prisma/client';
+import { users_role as Role } from '@prisma/client';
 
 /**
  * AuditLogService - Phase 13
@@ -41,7 +41,7 @@ export class AuditLogService {
     metadata?: any;
   }): Promise<void> {
     try {
-      await this.prisma.auditLog.create({
+      await this.prisma.audit_logs.create({
         data: {
           actorId: params.actorId,
           role: params.role,
@@ -262,7 +262,7 @@ export class AuditLogService {
    * (Admin only, requires authorization check in controller)
    */
   async getUserLogs(userId: string, limit = 100) {
-    return this.prisma.auditLog.findMany({
+    return this.prisma.audit_logs.findMany({
       where: { actorId: userId },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -274,7 +274,7 @@ export class AuditLogService {
    * (Admin only, requires authorization check in controller)
    */
   async getEntityLogs(entity: string, entityId: string, limit = 100) {
-    return this.prisma.auditLog.findMany({
+    return this.prisma.audit_logs.findMany({
       where: {
         entity,
         entityId,
@@ -291,7 +291,7 @@ export class AuditLogService {
   async getFailedLoginsByIp(ip: string, sinceMinutes = 60) {
     const since = new Date(Date.now() - sinceMinutes * 60 * 1000);
 
-    return this.prisma.auditLog.findMany({
+    return this.prisma.audit_logs.findMany({
       where: {
         action: 'LOGIN_FAILURE',
         ip,
@@ -303,3 +303,4 @@ export class AuditLogService {
     });
   }
 }
+

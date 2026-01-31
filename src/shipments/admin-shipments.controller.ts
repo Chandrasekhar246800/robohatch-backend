@@ -13,7 +13,7 @@ import { ShipmentsService } from './shipments.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { users_role as Role } from '@prisma/client';
 import { CreateShipmentDto, UpdateShipmentDto } from './dto/shipment.dto';
 import { ShipmentResponseDto, AdminShipmentListDto } from './dto/shipment-response.dto';
 
@@ -164,3 +164,4 @@ export class AdminShipmentsController {
     return this.shipmentsService.getShipmentById(shipmentId);
   }
 }
+

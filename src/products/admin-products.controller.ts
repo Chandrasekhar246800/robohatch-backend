@@ -14,7 +14,7 @@ import { UpdateMaterialDto } from '../materials/dto/update-material.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { users_role as Role } from '@prisma/client';
 import { Patch } from '@nestjs/common';
 
 @Controller('admin/products')
@@ -64,3 +64,4 @@ export class AdminProductsController {
     return this.materialsService.remove(materialId);
   }
 }
+
