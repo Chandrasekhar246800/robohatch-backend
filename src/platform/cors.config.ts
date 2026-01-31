@@ -31,8 +31,9 @@ export const getCorsConfig = (isDevelopment: boolean): CorsOptions => {
 
   return {
     origin: (origin, callback) => {
+      // Allow requests without Origin header (health checks, direct curl, Railway health monitoring)
       if (!origin) {
-        return callback(new Error('Origin header required'));
+        return callback(null, true);
       }
 
       if (allowedOrigins.includes(origin)) {
