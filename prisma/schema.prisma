@@ -8,81 +8,248 @@ datasource db {
 }
 
 model User {
-  id             Int              @id @default(autoincrement())
-  name           String           @db.VarChar(100)
-  email          String           @unique(map: "email") @db.VarChar(150)
-  password       String           @db.VarChar(255)
-  role           users_role?      @default(user)
-  created_at     DateTime?        @default(now()) @db.Timestamp(0)
-  custom_designs custom_designs[]
-  orders         Order[]
+  id           String         @id
+  email        String         @unique(map: "email")
+  password     String?
+  role         users_role     @default(CUSTOMER)
+  createdAt    DateTime       @default(now())
+  provider     users_provider @default(LOCAL)
+  providerId   String?        @unique
+  refreshToken String?
+  updatedAt    DateTime
 
   @@map("users")
 }
 
 model Product {
-  id             Int              @id @default(autoincrement())
-  name           String           @db.VarChar(150)
-  description    String?          @db.Text
-  price          Decimal          @db.Decimal(10, 2)
-  image_url      String?          @db.Text
-  created_at     DateTime?        @default(now()) @db.Timestamp(0)
-  custom_designs custom_designs[]
-  order_items    OrderItem[]
+  id          String   @id
+  name        String
+  description String?
+  basePrice   Float
+  createdAt   DateTime @default(now())
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime
 
   @@map("products")
 }
 
 model Order {
-  id           Int            @id @default(autoincrement())
-  user_id      Int
-  total_amount Decimal        @db.Decimal(10, 2)
-  status       orders_status? @default(pending)
-  created_at   DateTime?      @default(now()) @db.Timestamp(0)
-  order_items  OrderItem[]
-  users        User           @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "orders_ibfk_1")
+  id             String        @id
+  status         orders_status @default(CREATED)
+  createdAt      DateTime      @default(now())
+  idempotencyKey String        @unique
+  subtotal       Decimal       @db.Decimal(10, 2)
+  total          Decimal       @db.Decimal(10, 2)
+  updatedAt      DateTime
+  userId         String
 
-  @@index([user_id], map: "user_id")
   @@map("orders")
 }
 
 model OrderItem {
-  id         Int     @id @default(autoincrement())
-  order_id   Int
-  product_id Int
-  quantity   Int?    @default(1)
-  price      Decimal @db.Decimal(10, 2)
-  orders     Order   @relation(fields: [order_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "order_items_ibfk_1")
-  products   Product @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "order_items_ibfk_2")
+  id            String  @id
+  quantity      Int
+  basePrice     Decimal @db.Decimal(10, 2)
+  itemPrice     Decimal @db.Decimal(10, 2)
+  lineTotal     Decimal @db.Decimal(10, 2)
+  materialId    String
+  materialName  String
+  materialPrice Decimal @db.Decimal(10, 2)
+  orderId       String
+  productId     String
+  productName   String
 
-  @@index([order_id], map: "order_id")
-  @@index([product_id], map: "product_id")
   @@map("order_items")
 }
 
-model custom_designs {
-  id         Int       @id @default(autoincrement())
-  user_id    Int
-  product_id Int
-  image_url  String    @db.Text
-  created_at DateTime? @default(now()) @db.Timestamp(0)
-  users      User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "custom_designs_ibfk_1")
-  products   Product   @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "custom_designs_ibfk_2")
+model addresses {
+  id         String   @id
+  userId     String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  postalCode String
+  country    String
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+}
 
-  @@index([product_id], map: "product_id")
-  @@index([user_id], map: "user_id")
+model audit_logs {
+  id        String           @id
+  actorId   String?
+  role      audit_logs_role?
+  action    String
+  entity    String
+  entityId  String?
+  ip        String?
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  @@index([action])
+  @@index([actorId])
+  @@index([createdAt])
+  @@index([entity])
+}
+
+model cart_items {
+  id         String   @id
+  cartId     String
+  productId  String
+  materialId String
+  quantity   Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+
+  @@unique([cartId, productId, materialId])
+}
+
+model carts {
+  id        String   @id
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model file_access_logs {
+  id         String   @id
+  userId     String
+  orderId    String
+  fileId     String
+  ipAddress  String?
+  accessedAt DateTime @default(now())
+}
+
+model invoices {
+  id            String   @id
+  orderId       String   @unique
+  invoiceNumber String   @unique
+  invoiceUrl    String
+  issuedAt      DateTime @default(now())
+}
+
+model materials {
+  id        String   @id
+  productId String
+  name      String
+  price     Float
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model order_addresses {
+  id         String  @id
+  orderId    String  @unique
+  fullName   String
+  phone      String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  postalCode String
+  country    String
+}
+
+model password_reset_tokens {
+  id        String    @id
+  userId    String
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@index([userId])
+}
+
+model payments {
+  id                String           @id
+  orderId           String           @unique
+  userId            String
+  gateway           payments_gateway @default(RAZORPAY)
+  amount            Decimal          @db.Decimal(10, 2)
+  currency          String           @default("INR")
+  razorpayOrderId   String?          @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  status            payments_status  @default(CREATED)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime
+}
+
+model product_models {
+  id        String   @id
+  productId String
+  fileName  String
+  fileUrl   String
+  fileType  String
+  fileSize  Int
+  createdAt DateTime @default(now())
+}
+
+model profiles {
+  id        String   @id
+  userId    String   @unique
+  fullName  String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+}
+
+model shipments {
+  id             String           @id
+  orderId        String           @unique
+  courierName    String
+  trackingNumber String           @unique
+  status         shipments_status @default(PENDING)
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
 }
 
 enum orders_status {
-  pending
-  paid
-  processing
-  shipped
-  delivered
-  cancelled
+  CREATED
+  PAYMENT_PENDING
+  PAYMENT_FAILED
+  PAID
+  CANCELLED
+}
+
+enum audit_logs_role {
+  ADMIN
+  CUSTOMER
+}
+
+enum payments_gateway {
+  RAZORPAY
 }
 
 enum users_role {
-  user
-  admin
+  ADMIN
+  CUSTOMER
+}
+
+enum shipments_status {
+  PENDING
+  SHIPPED
+  IN_TRANSIT
+  DELIVERED
+}
+
+enum users_provider {
+  LOCAL
+  GOOGLE
+  MICROSOFT
+}
+
+enum payments_status {
+  CREATED
+  INITIATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
 }
