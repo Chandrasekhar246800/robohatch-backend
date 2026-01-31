@@ -313,7 +313,7 @@ export class ShipmentsService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return shipments.map((shipment) => ({
+    return shipments.map((shipment: any) => ({
       ...this.mapToResponseDto(shipment),
       userEmail: shipment.order.user.email,
       orderTotal: Number(shipment.order.total),

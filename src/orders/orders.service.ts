@@ -72,7 +72,7 @@ export class OrdersService {
     }
 
     let subtotal = new Decimal(0);
-    const orderItemsData = cart.items.map((item) => {
+    const orderItemsData = cart.items.map((item: any) => {
       const basePrice = new Decimal(item.product.basePrice);
       const materialPrice = new Decimal(item.material.price);
       const itemPrice = basePrice.add(materialPrice);
@@ -106,7 +106,7 @@ export class OrdersService {
       });
 
       await tx.orderItem.createMany({
-        data: orderItemsData.map((item) => ({
+        data: orderItemsData.map((item: any) => ({
           orderId: newOrder.id,
           productId: item.productId,
           productName: item.productName,
@@ -235,7 +235,7 @@ export class OrdersService {
 
     // STEP 7: Recalculate prices (snapshot at creation time)
     let subtotal = new Decimal(0);
-    const orderItemsData = cart.items.map((item) => {
+    const orderItemsData = cart.items.map((item: any) => {
       const basePrice = new Decimal(item.product.basePrice);
       const materialPrice = new Decimal(item.material.price);
       const itemPrice = basePrice.add(materialPrice);
@@ -289,7 +289,7 @@ export class OrdersService {
 
       // 9.2 Create OrderItems (snapshot)
       await tx.orderItem.createMany({
-        data: orderItemsData.map((item) => ({
+        data: orderItemsData.map((item: any) => ({
           orderId: newOrder.id,
           productId: item.productId,
           productName: item.productName,

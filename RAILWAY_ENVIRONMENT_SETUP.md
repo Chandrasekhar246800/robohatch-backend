@@ -39,16 +39,21 @@ PORT=3000
 These are optional due to our recent fixes, but needed for full functionality:
 
 ### Razorpay Payment Gateway (Phase 7)
+
+**Current Setup: Using Payment Link (Pre-verification)**
+```bash
+# Payment link to use until website verification
+RAZORPAY_PAYMENT_LINK=https://razorpay.me/@sivaramakrishnarankireddy
+```
+
+**After Website Verification:**
 ```bash
 RAZORPAY_KEY_ID=your_actual_razorpay_key_id
 RAZORPAY_KEY_SECRET=your_actual_razorpay_key_secret
 RAZORPAY_WEBHOOK_SECRET=your_razorpay_webhook_secret
 ```
 
-**How to get:** 
-1. Sign up at https://razorpay.com/
-2. Go to Settings → API Keys
-3. Generate Test/Live keys
+**Status:** Razorpay requires website verification before issuing API credentials. In the meantime, use the payment link above to accept payments manually.
 
 ### AWS S3 File Storage
 ```bash
