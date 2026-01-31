@@ -13,7 +13,6 @@ export class EmailService {
 
   constructor(private configService: ConfigService) {
     this.initializeTransporter();
-    this.loadTemplates();
   }
 
   private initializeTransporter() {
@@ -28,12 +27,10 @@ export class EmailService {
     };
 
     if (!emailConfig.auth.user || !emailConfig.auth.pass) {
-      this.logger.warn('⚠️  Email credentials not configured. Emails will be logged only.');
       return;
     }
 
     this.transporter = nodemailer.createTransport(emailConfig);
-    this.logger.log('✅ Email transporter initialized');
   }
 
   private loadTemplates() {
@@ -69,7 +66,6 @@ export class EmailService {
   async sendEmail(to: string, subject: string, html: string): Promise<void> {
     try {
       if (!this.transporter) {
-        this.logger.log(`[EMAIL NOT SENT - No transporter] To: ${to}, Subject: ${subject}`);
         return;
       }
 
@@ -82,11 +78,7 @@ export class EmailService {
         subject,
         html,
       });
-
-      this.logger.log(`✅ Email sent to ${to}: ${subject}`);
     } catch (error: any) {
-      this.logger.error(`❌ Failed to send email to ${to}: ${error.message}`);
-      // DO NOT throw - fire and forget
     }
   }
 
@@ -99,19 +91,42 @@ export class EmailService {
     total: number;
     orderDate: Date;
   }): Promise<void> {
-    const template = this.templates.get('order-created');
-    
-    const html = template
-      ? template({
-          orderId: data.orderId,
-          total: data.total.toFixed(2),
-          orderDate: data.orderDate.toLocaleDateString(),
-        })
-      : this.getDefaultOrderCreatedHtml(data);
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
+            .content { background-color: #f9fafb; padding: 30px; }
+            .detail { margin: 10px 0; }
+            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Your RoboHatch Order Has Been Placed</h1>
+            </div>
+            <div class="content">
+              <p>Thank you for your order! We've received it and will notify you once payment is confirmed.</p>
+              <div class="detail"><strong>Order ID:</strong> ${data.orderId}</div>
+              <div class="detail"><strong>Order Date:</strong> ${data.orderDate.toLocaleDateString('en-IN')}</div>
+              <div class="detail"><strong>Total Amount:</strong> ₹${data.total.toFixed(2)}</div>
+              <div class="detail"><strong>Order Status:</strong> Created</div>
+            </div>
+            <div class="footer">
+              <p>RoboHatch - 3D Printing Made Easy</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
 
     await this.sendEmail(
       data.email,
-      `Order Confirmation - ${data.orderId}`,
+      'Your RoboHatch Order Has Been Placed',
       html,
     );
   }
@@ -125,19 +140,42 @@ export class EmailService {
     total: number;
     paymentDate: Date;
   }): Promise<void> {
-    const template = this.templates.get('payment-success');
-    
-    const html = template
-      ? template({
-          orderId: data.orderId,
-          total: data.total.toFixed(2),
-          paymentDate: data.paymentDate.toLocaleDateString(),
-        })
-      : this.getDefaultPaymentSuccessHtml(data);
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #10b981; color: white; padding: 20px; text-align: center; }
+            .content { background-color: #f9fafb; padding: 30px; }
+            .detail { margin: 10px 0; }
+            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Payment Successful – RoboHatch</h1>
+            </div>
+            <div class="content">
+              <p>Your payment has been successfully processed!</p>
+              <div class="detail"><strong>Order ID:</strong> ${data.orderId}</div>
+              <div class="detail"><strong>Amount Paid:</strong> ₹${data.total.toFixed(2)}</div>
+              <div class="detail"><strong>Payment Status:</strong> Successful</div>
+              <p style="margin-top: 20px;">Your order is now being processed and will be shipped soon.</p>
+            </div>
+            <div class="footer">
+              <p>RoboHatch - 3D Printing Made Easy</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
 
     await this.sendEmail(
       data.email,
-      `Payment Successful - Order ${data.orderId}`,
+      'Payment Successful – RoboHatch',
       html,
     );
   }
@@ -205,10 +243,46 @@ export class EmailService {
     trackingNumber: string;
     shippedAt: Date;
   }): Promise<void> {
-    const html = this.getDefaultOrderShippedHtml(data);
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
+            .content { background-color: #f9fafb; padding: 30px; }
+            .detail { margin: 10px 0; }
+            .tracking { background-color: #fff; padding: 15px; border-left: 4px solid #3b82f6; margin: 20px 0; }
+            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Your Order Has Been Shipped!</h1>
+            </div>
+            <div class="content">
+              <p>Great news! Your order is on its way.</p>
+              <div class="detail"><strong>Order ID:</strong> ${data.orderId}</div>
+              <div class="detail"><strong>Status:</strong> SHIPPED</div>
+              <div class="tracking">
+                <div class="detail"><strong>Courier:</strong> ${data.courierName}</div>
+                <div class="detail"><strong>Tracking Number:</strong> ${data.trackingNumber}</div>
+              </div>
+              <p>You can use the tracking number to monitor your shipment's progress.</p>
+            </div>
+            <div class="footer">
+              <p>RoboHatch - 3D Printing Made Easy</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
     await this.sendEmail(
       data.email,
-      `Order Shipped - ${data.orderId}`,
+      'Your Order Has Been Shipped!',
       html,
     );
   }
@@ -222,10 +296,42 @@ export class EmailService {
     orderId: string;
     deliveredAt: Date;
   }): Promise<void> {
-    const html = this.getDefaultOrderDeliveredHtml(data);
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #10b981; color: white; padding: 20px; text-align: center; }
+            .content { background-color: #f9fafb; padding: 30px; }
+            .detail { margin: 10px 0; }
+            .footer { text-align: center; padding: 20px; color: #6b7280; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Your Order Has Been Delivered!</h1>
+            </div>
+            <div class="content">
+              <p>Your order has been successfully delivered.</p>
+              <div class="detail"><strong>Order ID:</strong> ${data.orderId}</div>
+              <div class="detail"><strong>Status:</strong> DELIVERED</div>
+              <div class="detail"><strong>Delivered At:</strong> ${data.deliveredAt.toLocaleString('en-IN')}</div>
+              <p style="margin-top: 20px;">Thank you for choosing RoboHatch!</p>
+            </div>
+            <div class="footer">
+              <p>RoboHatch - 3D Printing Made Easy</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
     await this.sendEmail(
       data.email,
-      `Order Delivered - ${data.orderId}`,
+      'Your Order Has Been Delivered!',
       html,
     );
   }

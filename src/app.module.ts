@@ -30,6 +30,7 @@ import jwtConfig from './config/jwt.config';
 import razorpayConfig from './config/razorpay.config';
 import emailConfig from './config/email.config';
 import storageConfig from './config/storage.config';
+import { envValidationSchema } from './config/env.validation';
 
 @Module({
   imports: [
@@ -39,6 +40,11 @@ import storageConfig from './config/storage.config';
       load: [appConfig, databaseConfig, jwtConfig, razorpayConfig, emailConfig, storageConfig],
       envFilePath: ['.env'],
       cache: true,
+      validationSchema: envValidationSchema,
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: false,
+      },
     }),
     // Global Prisma module
     PrismaModule,

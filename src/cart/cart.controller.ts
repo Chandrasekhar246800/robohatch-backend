@@ -2,7 +2,7 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
+  Put,
   Delete,
   Body,
   Param,
@@ -80,7 +80,7 @@ export class CartController {
    * Quantity must be >= 1
    * Use DELETE endpoint to remove items
    */
-  @Patch('items/:itemId')
+  @Put('items/:itemId')
   @HttpCode(HttpStatus.OK)
   async updateItemQuantity(
     @Req() req: RequestWithUser,

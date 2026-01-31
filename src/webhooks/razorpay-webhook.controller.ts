@@ -37,47 +37,31 @@ export class RazorpayWebhookController {
     @Body() body: any,
     @Req() req: RawBodyRequest<Request>,
   ) {
-    this.logger.log('Razorpay webhook received');
-
     if (!signature) {
-      this.logger.error('❌ Razorpay webhook signature missing');
       throw new BadRequestException('Signature required');
     }
 
-    // Get raw body for signature verification
-    // NestJS should be configured to provide rawBody for this route
     const rawBody = req.rawBody ? req.rawBody.toString('utf8') : JSON.stringify(body);
 
-    // CRITICAL: Verify webhook signature
     const isValid = this.razorpayService.verifyWebhookSignature(
       rawBody,
       signature,
     );
 
     if (!isValid) {
-      this.logger.error('❌ Razorpay webhook signature verification FAILED');
       throw new BadRequestException('Invalid webhook signature');
     }
 
-    this.logger.log('✅ Razorpay webhook signature verified');
-
-    // Extract event type
     const event = body.event;
 
     if (!event) {
-      this.logger.error('❌ Missing event type in webhook payload');
       throw new BadRequestException('Invalid webhook payload');
     }
 
-    // Process webhook event (idempotent)
     try {
       await this.paymentsService.handleWebhookEvent(event, body);
-      this.logger.log(`✅ Razorpay webhook processed successfully: ${event}`);
       return { received: true };
     } catch (error: any) {
-      this.logger.error(`❌ Razorpay webhook processing failed: ${error.message}`);
-      // Return 200 anyway to prevent Razorpay retries for application errors
-      // Only signature verification failures should return 4xx
       return { received: false, error: error.message };
     }
   }

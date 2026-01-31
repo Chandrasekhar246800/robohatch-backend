@@ -11,7 +11,7 @@ import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.int
 export const getCorsConfig = (isDevelopment: boolean): CorsOptions => {
   if (isDevelopment) {
     return {
-      origin: '*', // Permissive for development
+      origin: true,
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       allowedHeaders: [
@@ -23,11 +23,7 @@ export const getCorsConfig = (isDevelopment: boolean): CorsOptions => {
     };
   }
 
-  // PRODUCTION: Strict whitelist
-  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
-    'https://robohatch.in',
-    'https://www.robohatch.in',
-  ];
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [];
 
   if (allowedOrigins.length === 0) {
     throw new Error('ALLOWED_ORIGINS must be set in production');
@@ -35,20 +31,17 @@ export const getCorsConfig = (isDevelopment: boolean): CorsOptions => {
 
   return {
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g., mobile apps, Postman)
       if (!origin) {
-        return callback(null, true);
+        return callback(new Error('Origin header required'));
       }
 
-      // Check whitelist
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
 
-      // Reject unknown origins
-      callback(new Error(`Origin ${origin} not allowed by CORS`));
+      callback(new Error('Origin not allowed by CORS'));
     },
-    credentials: true, // Allow cookies/auth headers
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: [
       'Content-Type',
@@ -56,6 +49,6 @@ export const getCorsConfig = (isDevelopment: boolean): CorsOptions => {
       'X-Requested-With',
       'Idempotency-Key',
     ],
-    exposedHeaders: ['X-Request-Id'], // Correlation ID
+    exposedHeaders: ['X-Request-Id'],
   };
 };

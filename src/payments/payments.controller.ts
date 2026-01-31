@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Param,
+  Body,
   UseGuards,
   Req,
   HttpCode,
@@ -30,21 +31,21 @@ export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
   /**
-   * POST /payments/initiate/:orderId
+   * POST /payments/initiate
    * Initiate Razorpay payment for an order
    * CUSTOMER only
    * Phase 13: Rate limited to 3 requests/minute
    */
-  @Post('initiate/:orderId')
-  @Throttle({ default: { limit: 3, ttl: 60000 } }) // Phase 13: 3 requests/minute
+  @Post('initiate')
+  @Throttle({ payment: { limit: 10, ttl: 60000 } })
   @Roles(Role.CUSTOMER)
   @HttpCode(HttpStatus.OK)
   async initiatePayment(
-    @Param('orderId') orderId: string,
+    @Body() body: { orderId: string },
     @Req() req: RequestWithUser,
     @Ip() ip: string,
   ) {
-    return this.paymentsService.initiatePayment(orderId, req.user.userId, ip);
+    return this.paymentsService.initiatePayment(body.orderId, req.user.userId, ip);
   }
 
   /**

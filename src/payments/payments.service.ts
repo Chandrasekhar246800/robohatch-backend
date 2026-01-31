@@ -59,13 +59,9 @@ export class PaymentsService {
     });
 
     if (existingPayment && existingPayment.razorpayOrderId) {
-      this.logger.log(
-        `Payment already exists for order ${orderId}, returning existing Razorpay order`,
-      );
-
       return {
         razorpayOrderId: existingPayment.razorpayOrderId,
-        amount: Number(order.total) * 100, // Convert to paise
+        amount: Number(order.total) * 100,
         currency: 'INR',
         key: this.razorpayService.getKeyId(),
       };
@@ -105,11 +101,6 @@ export class PaymentsService {
       });
     });
 
-    this.logger.log(
-      `Payment initiated for order ${orderId}, Razorpay Order: ${razorpayOrder.razorpayOrderId}`,
-    );
-
-    // Phase 13: Log payment initiation
     await this.auditLogService.logPaymentInitiated(
       userId,
       orderId,
@@ -133,8 +124,6 @@ export class PaymentsService {
    * MUST be idempotent - webhooks can be delivered multiple times
    */
   async handleWebhookEvent(event: string, payload: any) {
-    this.logger.log(`Processing Razorpay webhook: ${event}`);
-
     switch (event) {
       case 'payment.authorized':
         await this.handlePaymentAuthorized(payload);
@@ -149,7 +138,7 @@ export class PaymentsService {
         break;
 
       default:
-        this.logger.warn(`Unhandled webhook event: ${event}`);
+        break;
     }
   }
 
@@ -162,7 +151,6 @@ export class PaymentsService {
     const razorpayOrderId = payload.payment?.entity?.order_id;
 
     if (!razorpayPaymentId || !razorpayOrderId) {
-      this.logger.error('Missing payment ID or order ID in authorized event');
       return;
     }
 
@@ -171,18 +159,11 @@ export class PaymentsService {
     });
 
     if (!payment) {
-      this.logger.error(
-        `Payment not found for Razorpay Order: ${razorpayOrderId}`,
-      );
       return;
     }
 
-    // Idempotent update
     if (payment.status === PaymentStatus.AUTHORIZED || 
         payment.status === PaymentStatus.CAPTURED) {
-      this.logger.log(
-        `Payment ${payment.id} already authorized/captured, skipping`,
-      );
       return;
     }
 
@@ -193,10 +174,6 @@ export class PaymentsService {
         razorpayPaymentId,
       },
     });
-
-    this.logger.log(
-      `✅ Payment authorized for Razorpay Order: ${razorpayOrderId}`,
-    );
   }
 
   /**
@@ -208,7 +185,6 @@ export class PaymentsService {
     const razorpayOrderId = payload.payment?.entity?.order_id;
 
     if (!razorpayPaymentId || !razorpayOrderId) {
-      this.logger.error('Missing payment ID or order ID in captured event');
       return;
     }
 
@@ -224,22 +200,14 @@ export class PaymentsService {
     });
 
     if (!payment) {
-      this.logger.error(
-        `Payment not found for Razorpay Order: ${razorpayOrderId}`,
-      );
       return;
     }
 
-    // Idempotent check - skip if already captured
     if (payment.status === PaymentStatus.CAPTURED && 
         payment.order.status === OrderStatus.PAID) {
-      this.logger.log(
-        `Payment ${payment.id} already captured and order paid, skipping`,
-      );
       return;
     }
 
-    // ATOMIC transaction - update both payment and order
     await this.prisma.$transaction(async (tx) => {
       await tx.payment.update({
         where: { id: payment.id },
@@ -255,12 +223,6 @@ export class PaymentsService {
       });
     });
 
-    this.logger.log(
-      `✅ Payment captured and Order ${payment.orderId} marked as PAID (Payment: ${razorpayPaymentId})`,
-    );
-
-    // Fire-and-forget: Generate invoice and send email
-    // These operations must NOT affect payment/order state
     this.invoicesService.generateInvoice(payment.orderId);
     this.notificationsService.notifyPaymentSuccess({
       email: payment.order.user.email,
@@ -313,12 +275,12 @@ export class PaymentsService {
 
       await tx.order.update({
         where: { id: payment.orderId },
-        data: { status: OrderStatus.PAYMENT_FAILED },
+        data: { status: OrderStatus.CANCELLED },
       });
     });
 
     this.logger.log(
-      `❌ Payment failed for Razorpay Order: ${razorpayOrderId}, Order ${payment.orderId} marked as PAYMENT_FAILED`,
+      `❌ Payment failed for Razorpay Order: ${razorpayOrderId}, Order ${payment.orderId} marked as CANCELLED`,
     );
   }
 

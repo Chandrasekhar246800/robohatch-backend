@@ -6,6 +6,7 @@ import {
   HttpStatus,
   UseGuards,
   Req,
+  Res,
   UnauthorizedException,
   Ip,
 } from '@nestjs/common';
@@ -18,7 +19,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Public } from './decorators/public.decorator';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 interface RequestWithUser extends Request {
   user: {
@@ -33,47 +34,127 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // Phase 13: 5 requests/minute
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.register(registerDto);
+    
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    res.cookie('access_token', result.accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000,
+      path: '/',
+    });
+    
+    res.cookie('refresh_token', result.refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+    
+    return { user: result.user };
   }
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // Phase 13: 5 requests/minute
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto, @Ip() ip: string) {
-    return this.authService.login(loginDto, ip);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.login(loginDto, ip);
+    
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    res.cookie('access_token', result.accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000,
+      path: '/',
+    });
+    
+    res.cookie('refresh_token', result.refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+    
+    return { user: result.user };
   }
 
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } }) // Phase 13: 5 requests/minute
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Req() req: Request, @Ip() ip: string) {
-    // Extract refresh token from Authorization header
-    const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Refresh token missing or invalid format');
-    }
-
-    const refreshToken = authHeader.replace('Bearer ', '');
+  async refresh(
+    @Req() req: Request,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.refresh_token;
 
     if (!refreshToken) {
+      res.clearCookie('access_token', { path: '/' });
+      res.clearCookie('refresh_token', { path: '/' });
       throw new UnauthorizedException('Refresh token is required');
     }
 
-    return this.authService.refreshTokens(refreshToken, ip);
+    try {
+      const result = await this.authService.refreshTokens(refreshToken, ip);
+      
+      const isProduction = process.env.NODE_ENV === 'production';
+      
+      res.cookie('access_token', result.accessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: 15 * 60 * 1000,
+        path: '/',
+      });
+      
+      res.cookie('refresh_token', result.refreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/',
+      });
+      
+      return { user: result.user };
+    } catch (error) {
+      res.clearCookie('access_token', { path: '/' });
+      res.clearCookie('refresh_token', { path: '/' });
+      throw error;
+    }
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Req() req: RequestWithUser, @Ip() ip: string) {
+  async logout(
+    @Req() req: RequestWithUser,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     await this.authService.logout(req.user.userId, ip);
+    
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
+    
     return { message: 'Logged out successfully' };
   }
 
@@ -89,11 +170,35 @@ export class AuthController {
    * - No role injection from client
    */
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   @Post('google')
   @HttpCode(HttpStatus.OK)
-  async loginWithGoogle(@Body() dto: OAuthLoginDto, @Ip() ip: string) {
-    return this.authService.loginWithGoogle(dto.idToken, ip);
+  async loginWithGoogle(
+    @Body() dto: OAuthLoginDto,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.loginWithGoogle(dto.idToken, ip);
+    
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    res.cookie('access_token', result.accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000,
+      path: '/',
+    });
+    
+    res.cookie('refresh_token', result.refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+    
+    return { user: result.user };
   }
 
   /**
@@ -108,11 +213,35 @@ export class AuthController {
    * - No role injection from client
    */
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   @Post('microsoft')
   @HttpCode(HttpStatus.OK)
-  async loginWithMicrosoft(@Body() dto: OAuthLoginDto, @Ip() ip: string) {
-    return this.authService.loginWithMicrosoft(dto.idToken, ip);
+  async loginWithMicrosoft(
+    @Body() dto: OAuthLoginDto,
+    @Ip() ip: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.loginWithMicrosoft(dto.idToken, ip);
+    
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    res.cookie('access_token', result.accessToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000,
+      path: '/',
+    });
+    
+    res.cookie('refresh_token', result.refreshToken, {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: '/',
+    });
+    
+    return { user: result.user };
   }
 
   /**
@@ -130,7 +259,7 @@ export class AuthController {
    * - Rate limited: 3 requests/minute
    */
   @Public()
-  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() dto: ForgotPasswordDto, @Ip() ip: string) {
@@ -155,7 +284,7 @@ export class AuthController {
    * - Rate limited: 5 requests/minute
    */
   @Public()
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() dto: ResetPasswordDto, @Ip() ip: string) {

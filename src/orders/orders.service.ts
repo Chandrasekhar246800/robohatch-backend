@@ -29,6 +29,133 @@ export class OrdersService {
   ) {}
 
   /**
+   * Checkout - Create order from cart
+   * 
+   * FLOW:
+   * 1. Fetch cart + items
+   * 2. Validate cart not empty
+   * 3. Revalidate products/materials active
+   * 4. Calculate prices server-side
+   * 5. BEGIN TRANSACTION
+   *    - Create Order (status = CREATED)
+   *    - Create OrderItems with snapshots
+   *    - Clear cart items
+   * 6. COMMIT
+   * 7. Return order summary
+   */
+  async checkout(userId: string): Promise<OrderResponseDto> {
+    const cart = await this.prisma.cart.findFirst({
+      where: { userId },
+      include: {
+        items: {
+          include: {
+            product: true,
+            material: true,
+          },
+        },
+      },
+    });
+
+    if (!cart || cart.items.length === 0) {
+      throw new BadRequestException('Cart is empty');
+    }
+
+    const invalidItems: string[] = [];
+    for (const item of cart.items) {
+      if (!item.product.isActive || !item.material.isActive) {
+        invalidItems.push(item.id);
+      }
+    }
+
+    if (invalidItems.length > 0) {
+      throw new BadRequestException('Cart contains inactive items');
+    }
+
+    let subtotal = new Decimal(0);
+    const orderItemsData = cart.items.map((item) => {
+      const basePrice = new Decimal(item.product.basePrice);
+      const materialPrice = new Decimal(item.material.price);
+      const itemPrice = basePrice.add(materialPrice);
+      const lineTotal = itemPrice.mul(item.quantity);
+      subtotal = subtotal.add(lineTotal);
+
+      return {
+        productId: item.product.id,
+        productName: item.product.name,
+        basePrice: basePrice,
+        materialId: item.material.id,
+        materialName: item.material.name,
+        materialPrice: materialPrice,
+        quantity: item.quantity,
+        itemPrice: itemPrice,
+        lineTotal: lineTotal,
+      };
+    });
+
+    const total = subtotal;
+
+    const order = await this.prisma.$transaction(async (tx) => {
+      const newOrder = await tx.order.create({
+        data: {
+          userId,
+          idempotencyKey: `checkout_${userId}_${Date.now()}`,
+          subtotal,
+          total,
+          status: 'CREATED',
+        },
+      });
+
+      await tx.orderItem.createMany({
+        data: orderItemsData.map((item) => ({
+          orderId: newOrder.id,
+          productId: item.productId,
+          productName: item.productName,
+          basePrice: item.basePrice,
+          materialId: item.materialId,
+          materialName: item.materialName,
+          materialPrice: item.materialPrice,
+          quantity: item.quantity,
+          itemPrice: item.itemPrice,
+          lineTotal: item.lineTotal,
+        })),
+      });
+
+      await tx.cartItem.deleteMany({
+        where: { cartId: cart.id },
+      });
+
+      return tx.order.findUnique({
+        where: { id: newOrder.id },
+        include: {
+          items: true,
+        },
+      });
+    });
+
+    return this.mapCheckoutOrderToResponse(order!);
+  }
+
+  async getOrders(userId: string) {
+    const orders = await this.prisma.order.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        status: true,
+        total: true,
+        createdAt: true,
+      },
+    });
+
+    return orders.map((order) => ({
+      orderId: order.id,
+      status: order.status,
+      totalAmount: parseFloat(order.total.toString()),
+      createdAt: order.createdAt,
+    }));
+  }
+
+  /**
    * Create order from cart
    * 
    * FLOW (DO NOT REORDER):
@@ -249,6 +376,38 @@ export class OrdersService {
    * Map Prisma order to response DTO
    */
   private mapOrderToResponse(order: any): OrderResponseDto {
+    return {
+      id: order.id,
+      status: order.status,
+      subtotal: parseFloat(order.subtotal.toString()),
+      total: parseFloat(order.total.toString()),
+      items: order.items.map((item: any): OrderItemResponseDto => ({
+        id: item.id,
+        productId: item.productId,
+        productName: item.productName,
+        basePrice: parseFloat(item.basePrice.toString()),
+        materialId: item.materialId,
+        materialName: item.materialName,
+        materialPrice: parseFloat(item.materialPrice.toString()),
+        quantity: item.quantity,
+        itemPrice: parseFloat(item.itemPrice.toString()),
+        lineTotal: parseFloat(item.lineTotal.toString()),
+      })),
+      address: {
+        fullName: order.address.fullName,
+        phone: order.address.phone,
+        line1: order.address.line1,
+        line2: order.address.line2,
+        city: order.address.city,
+        state: order.address.state,
+        postalCode: order.address.postalCode,
+        country: order.address.country,
+      },
+      createdAt: order.createdAt,
+    };
+  }
+
+  private mapCheckoutOrderToResponse(order: any): OrderResponseDto {
     return {
       id: order.id,
       status: order.status,

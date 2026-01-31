@@ -17,23 +17,18 @@ export const throttlerConfig: ThrottlerModuleOptions = {
   throttlers: [
     {
       name: 'default',
-      ttl: 60000, // 60 seconds
-      limit: 100, // 100 requests per minute
+      ttl: 60000,
+      limit: 100,
     },
     {
       name: 'auth',
-      ttl: 60000, // 60 seconds
-      limit: 5, // 5 requests per minute (strict for login/register)
+      ttl: 60000,
+      limit: 5,
     },
     {
       name: 'payment',
-      ttl: 60000, // 60 seconds
-      limit: 3, // 3 requests per minute (strict for payment initiation)
-    },
-    {
-      name: 'admin',
-      ttl: 60000, // 60 seconds
-      limit: 50, // Higher limit for admin operations
+      ttl: 60000,
+      limit: 10,
     },
   ],
 };

@@ -5,11 +5,12 @@ import { AppModule } from './app.module';
 import { GlobalValidationPipe } from './common/pipes/validation.pipe';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { getCorsConfig } from './platform/cors.config';
+import { PrismaService } from './prisma/prisma.service';
 import helmet from 'helmet';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    bufferLogs: true, // Buffer logs until logger is ready
+    bufferLogs: true,
   });
   
   const configService = app.get(ConfigService);
@@ -28,28 +29,32 @@ async function bootstrap() {
     process.exit(1);
   }
 
-  // ==================== PHASE 13: PRODUCTION HARDENING ====================
-
-  // Security Headers (Helmet)
   app.use(
     helmet({
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: ["'self'"],
           scriptSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
+          imgSrc: ["'self'", 'data:'],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
         },
       },
       hsts: {
-        maxAge: 31536000, // 1 year
+        maxAge: 31536000,
         includeSubDomains: true,
         preload: true,
       },
+      frameguard: { action: 'deny' },
+      noSniff: true,
+      xssFilter: true,
     }),
   );
 
-  // CORS Configuration (Phase 13 Hardened)
   const corsConfig = getCorsConfig(isDevelopment);
   app.enableCors(corsConfig);
 
@@ -58,8 +63,6 @@ async function bootstrap() {
   } else {
     logger.log('✅ CORS is locked down for production');
   }
-
-  // ========================================================================
 
   // Set global prefix with versioning included
   app.setGlobalPrefix(`api/${apiVersion}`);
@@ -70,8 +73,28 @@ async function bootstrap() {
   // Apply global exception filter
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  // Start the application
   await app.listen(port);
+
+  const prisma = app.get(PrismaService);
+
+  const shutdown = async (signal: string) => {
+    logger.log(`${signal} received, starting graceful shutdown`);
+
+    try {
+      await prisma.$disconnect();
+      logger.log('Database connections closed');
+
+      await app.close();
+      logger.log('Application closed successfully');
+      process.exit(0);
+    } catch (error) {
+      logger.error('Error during shutdown', error);
+      process.exit(1);
+    }
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 
   logger.log(`🚀 Application is running on: http://localhost:${port}/api/${apiVersion}`);
   logger.log(`📊 Environment: ${nodeEnv}`);

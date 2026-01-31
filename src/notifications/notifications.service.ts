@@ -18,21 +18,10 @@ export class NotificationsService {
     orderDate: Date;
   }): Promise<void> {
     try {
-      // Fire-and-forget - do not await
       this.emailService
         .sendOrderCreatedEmail(data)
-        .catch((error) => {
-          this.logger.error(
-            `Failed to send order created email for ${data.orderId}: ${error.message}`,
-          );
-        });
-
-      this.logger.log(`Order created notification queued for ${data.orderId}`);
+        .catch(() => {});
     } catch (error: any) {
-      this.logger.error(
-        `Error queueing order created notification: ${error.message}`,
-      );
-      // Do not throw - notifications must not affect business logic
     }
   }
 
@@ -47,21 +36,10 @@ export class NotificationsService {
     paymentDate: Date;
   }): Promise<void> {
     try {
-      // Fire-and-forget - do not await
       this.emailService
         .sendPaymentSuccessEmail(data)
-        .catch((error) => {
-          this.logger.error(
-            `Failed to send payment success email for ${data.orderId}: ${error.message}`,
-          );
-        });
-
-      this.logger.log(`Payment success notification queued for ${data.orderId}`);
+        .catch(() => {});
     } catch (error: any) {
-      this.logger.error(
-        `Error queueing payment success notification: ${error.message}`,
-      );
-      // Do not throw - notifications must not affect business logic
     }
   }
 
@@ -77,21 +55,10 @@ export class NotificationsService {
     trackingNumber: string;
   }): Promise<void> {
     try {
-      // Fire-and-forget - do not await
       this.emailService
         .sendShipmentCreatedEmail(data)
-        .catch((error) => {
-          this.logger.error(
-            `Failed to send shipment created email for ${data.orderId}: ${error.message}`,
-          );
-        });
-
-      this.logger.log(`Shipment created notification queued for ${data.orderId}`);
+        .catch(() => {});
     } catch (error: any) {
-      this.logger.error(
-        `Error queueing shipment created notification: ${error.message}`,
-      );
-      // Do not throw - notifications must not affect business logic
     }
   }
 
@@ -108,21 +75,10 @@ export class NotificationsService {
     shippedAt: Date;
   }): Promise<void> {
     try {
-      // Fire-and-forget - do not await
       this.emailService
         .sendOrderShippedEmail(data)
-        .catch((error) => {
-          this.logger.error(
-            `Failed to send order shipped email for ${data.orderId}: ${error.message}`,
-          );
-        });
-
-      this.logger.log(`Order shipped notification queued for ${data.orderId}`);
+        .catch(() => {});
     } catch (error: any) {
-      this.logger.error(
-        `Error queueing order shipped notification: ${error.message}`,
-      );
-      // Do not throw - notifications must not affect business logic
     }
   }
 
@@ -137,21 +93,10 @@ export class NotificationsService {
     deliveredAt: Date;
   }): Promise<void> {
     try {
-      // Fire-and-forget - do not await
       this.emailService
         .sendOrderDeliveredEmail(data)
-        .catch((error) => {
-          this.logger.error(
-            `Failed to send order delivered email for ${data.orderId}: ${error.message}`,
-          );
-        });
-
-      this.logger.log(`Order delivered notification queued for ${data.orderId}`);
+        .catch(() => {});
     } catch (error: any) {
-      this.logger.error(
-        `Error queueing order delivered notification: ${error.message}`,
-      );
-      // Do not throw - notifications must not affect business logic
     }
   }
 
@@ -170,23 +115,10 @@ export class NotificationsService {
     expiresAt: Date;
   }): Promise<void> {
     try {
-      // Fire-and-forget - do not await
       this.emailService
         .sendPasswordResetEmail(data)
-        .catch((error) => {
-          // Never log the token - only log generic error
-          this.logger.error(
-            `Failed to send password reset email to ${data.email}: ${error.message}`,
-          );
-        });
-
-      // Never log the token - only log that email was queued
-      this.logger.log(`Password reset notification queued for ${data.email}`);
+        .catch(() => {});
     } catch (error: any) {
-      this.logger.error(
-        `Error queueing password reset notification: ${error.message}`,
-      );
-      // Do not throw - notifications must not affect business logic
     }
   }
 }

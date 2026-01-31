@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
@@ -94,35 +94,35 @@ export class CartService {
       throw new BadRequestException('Material is no longer available');
     }
 
-    // Check if item already exists in cart
-    const existingItem = await this.prisma.cartItem.findFirst({
-      where: {
-        cartId: cart.id,
-        productId: productId,
-        materialId: materialId,
-      },
-    });
-
-    if (existingItem) {
-      // Increment quantity using transaction to ensure atomicity
-      await this.prisma.cartItem.update({
-        where: { id: existingItem.id },
-        data: {
-          quantity: existingItem.quantity + quantity,
-          updatedAt: new Date(),
-        },
-      });
-    } else {
-      // Create new cart item
-      await this.prisma.cartItem.create({
-        data: {
+    // Use transaction to handle duplicate items atomically
+    await this.prisma.$transaction(async (tx) => {
+      const existingItem = await tx.cartItem.findFirst({
+        where: {
           cartId: cart.id,
           productId: productId,
           materialId: materialId,
-          quantity: quantity,
         },
       });
-    }
+
+      if (existingItem) {
+        await tx.cartItem.update({
+          where: { id: existingItem.id },
+          data: {
+            quantity: existingItem.quantity + quantity,
+            updatedAt: new Date(),
+          },
+        });
+      } else {
+        await tx.cartItem.create({
+          data: {
+            cartId: cart.id,
+            productId: productId,
+            materialId: materialId,
+            quantity: quantity,
+          },
+        });
+      }
+    });
 
     // Return updated cart with prices calculated
     return this.getCart(userId);
@@ -227,16 +227,19 @@ export class CartService {
     // Get user's cart
     const cart = await this.getOrCreateCart(userId);
 
-    // Verify cart item exists and belongs to user's cart
-    const cartItem = await this.prisma.cartItem.findFirst({
-      where: {
-        id: itemId,
-        cartId: cart.id,
-      },
+    // Verify cart item exists
+    const cartItem = await this.prisma.cartItem.findUnique({
+      where: { id: itemId },
+      include: { cart: true },
     });
 
     if (!cartItem) {
       throw new NotFoundException('Cart item not found');
+    }
+
+    // Verify ownership
+    if (cartItem.cart.userId !== userId) {
+      throw new ForbiddenException('Access denied');
     }
 
     // Update quantity atomically
@@ -264,16 +267,19 @@ export class CartService {
     // Get user's cart
     const cart = await this.getOrCreateCart(userId);
 
-    // Verify cart item exists and belongs to user's cart
-    const cartItem = await this.prisma.cartItem.findFirst({
-      where: {
-        id: itemId,
-        cartId: cart.id,
-      },
+    // Verify cart item exists
+    const cartItem = await this.prisma.cartItem.findUnique({
+      where: { id: itemId },
+      include: { cart: true },
     });
 
     if (!cartItem) {
       throw new NotFoundException('Cart item not found');
+    }
+
+    // Verify ownership
+    if (cartItem.cart.userId !== userId) {
+      throw new ForbiddenException('Access denied');
     }
 
     // Hard delete cart item

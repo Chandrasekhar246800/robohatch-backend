@@ -14,12 +14,6 @@ export class RazorpayService {
     const keySecret = this.configService.get<string>('razorpay.keySecret');
     this.webhookSecret = this.configService.get<string>('razorpay.webhookSecret') || '';
 
-    if (!keyId || !keySecret) {
-      this.logger.warn('⚠️  Razorpay credentials not configured. Payment operations will fail until configured.');
-    }
-
-    // Initialize Razorpay even with empty credentials to prevent crashes
-    // Actual operations will fail with meaningful errors if not configured
     this.razorpay = new Razorpay({
       key_id: keyId || 'not_configured',
       key_secret: keySecret || 'not_configured',
@@ -57,8 +51,6 @@ export class RazorpayService {
 
       const razorpayOrder = await this.razorpay.orders.create(options);
 
-      this.logger.log(`Razorpay Order created: ${razorpayOrder.id}`);
-
       return {
         razorpayOrderId: razorpayOrder.id,
         amount: razorpayOrder.amount,
@@ -66,7 +58,6 @@ export class RazorpayService {
         status: razorpayOrder.status,
       };
     } catch (error: any) {
-      this.logger.error('Razorpay createOrder failed', error);
       throw new Error(`Razorpay order creation failed: ${error.message}`);
     }
   }
@@ -82,15 +73,8 @@ export class RazorpayService {
         .update(body)
         .digest('hex');
 
-      const isValid = expectedSignature === signature;
-
-      if (!isValid) {
-        this.logger.warn('❌ Razorpay webhook signature verification failed');
-      }
-
-      return isValid;
+      return expectedSignature === signature;
     } catch (error: any) {
-      this.logger.error('Razorpay webhook verification error', error);
       return false;
     }
   }
@@ -111,20 +95,15 @@ export class RazorpayService {
       const payment = await this.razorpay.payments.fetch(paymentId);
       return payment;
     } catch (error: any) {
-      this.logger.error(`Failed to fetch payment ${paymentId}`, error);
       throw new Error(`Failed to fetch payment: ${error.message}`);
     }
   }
 
-  /**
-   * Fetch order details from Razorpay
-   */
   async getOrder(razorpayOrderId: string) {
     try {
       const order = await this.razorpay.orders.fetch(razorpayOrderId);
       return order;
     } catch (error: any) {
-      this.logger.error(`Failed to fetch order ${razorpayOrderId}`, error);
       throw new Error(`Failed to fetch order: ${error.message}`);
     }
   }

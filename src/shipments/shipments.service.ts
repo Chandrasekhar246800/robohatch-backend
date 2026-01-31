@@ -216,11 +216,6 @@ export class ShipmentsService {
       data: updateData,
     });
 
-    this.logger.log(
-      `Shipment ${shipmentId} updated (status: ${shipment.status})`,
-    );
-
-    // STEP 6: Send notifications based on status change (fire-and-forget)
     const userEmail = existingShipment.order.user.email;
 
     if (status === ShipmentStatus.SHIPPED && status !== existingShipment.status) {

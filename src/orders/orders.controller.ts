@@ -32,8 +32,9 @@ interface RequestWithUser extends Request {
  * - Idempotency key from header
  * 
  * ROUTES:
- * - POST /api/v1/orders       - Create order
- * - GET  /api/v1/orders/:id   - Get order
+ * - POST /api/v1/orders/checkout - Create order from cart
+ * - POST /api/v1/orders          - Create order
+ * - GET  /api/v1/orders/:id      - Get order
  * 
  * OUT OF SCOPE:
  * - No payment gateway
@@ -42,9 +43,37 @@ interface RequestWithUser extends Request {
  * - No order cancellation
  */
 @Controller('orders')
-@Roles(Role.CUSTOMER) // CUSTOMER-ONLY: Admins cannot create orders
+@Roles(Role.CUSTOMER)
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
+
+  /**
+   * Checkout - Create order from cart
+   * 
+   * TRANSACTION:
+   * - Creates order
+   * - Snapshots cart items
+   * - Clears cart
+   */
+  @Post('checkout')
+  @HttpCode(HttpStatus.CREATED)
+  async checkout(@Req() req: RequestWithUser) {
+    const userId = req.user.userId;
+    return this.ordersService.checkout(userId);
+  }
+
+  /**
+   * Get all orders for the authenticated user
+   * 
+   * OWNERSHIP:
+   * - User can only view their own orders
+   */
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async getOrders(@Req() req: RequestWithUser) {
+    const userId = req.user.userId;
+    return this.ordersService.getOrders(userId);
+  }
 
   /**
    * Create order from cart
