@@ -15,7 +15,6 @@ import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
 import { AdminOrdersModule } from './admin-orders/admin-orders.module';
-import { DemoModule } from './demo/demo.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { InvoicesModule } from './invoices/invoices.module';
 import { FilesModule } from './files/files.module';
@@ -73,7 +72,6 @@ import { envValidationSchema } from './config/env.validation';
     ShipmentsModule, // Phase 12: Fulfillment & Shipping Management
     CustomFilesModule, // Custom File Upload via Email
     CustomTextModule, // Custom Text Customization via Email
-    DemoModule,
   ],
   providers: [
     // Apply JWT guard globally
