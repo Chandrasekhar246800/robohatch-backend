@@ -13,3 +13,4 @@ export class PublicProductModelDto {
   fileSize!: number;
   createdAt!: Date;
 }
+

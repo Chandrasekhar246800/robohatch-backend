@@ -1,4 +1,4 @@
-import { OrderStatus, PaymentStatus } from '@prisma/client';
+import { orders_status as OrderStatus, payments_status as PaymentStatus } from '@prisma/client';
 
 export class AdminOrderItemDto {
   productName!: string;
@@ -37,3 +37,4 @@ export class AdminOrderResponseDto {
   items!: AdminOrderItemDto[];
   address?: AdminOrderAddressDto;
 }
+

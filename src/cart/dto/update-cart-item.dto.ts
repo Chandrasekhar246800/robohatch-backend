@@ -12,3 +12,4 @@ export class UpdateCartItemDto {
   @Min(1, { message: 'Quantity must be at least 1. Use DELETE to remove items.' })
   quantity!: number;
 }
+

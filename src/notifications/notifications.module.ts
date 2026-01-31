@@ -10,3 +10,4 @@ import emailConfig from '../config/email.config';
   exports: [NotificationsService],
 })
 export class NotificationsModule {}
+

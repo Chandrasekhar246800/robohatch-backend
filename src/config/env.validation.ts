@@ -56,3 +56,4 @@ export const envValidationSchema = Joi.object({
       otherwise: Joi.optional().default('dev-secret'),
     }),
 });
+

@@ -15,3 +15,4 @@ export class PublicProductDto {
   createdAt!: Date;
   updatedAt!: Date;
 }
+

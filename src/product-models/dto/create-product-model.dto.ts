@@ -21,3 +21,4 @@ export class CreateProductModelDto {
   @Min(1)
   fileSize!: number;
 }
+

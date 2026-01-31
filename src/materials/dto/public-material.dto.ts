@@ -12,3 +12,4 @@ export class PublicMaterialDto {
   name!: string;
   price!: number;
 }
+

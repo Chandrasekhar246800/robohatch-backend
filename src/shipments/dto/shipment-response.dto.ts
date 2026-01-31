@@ -33,3 +33,4 @@ export class AdminShipmentListDto extends ShipmentResponseDto {
   orderTotal?: number;
 }
 
+

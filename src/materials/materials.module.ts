@@ -6,3 +6,4 @@ import { MaterialsService } from './materials.service';
   exports: [MaterialsService],
 })
 export class MaterialsModule {}
+

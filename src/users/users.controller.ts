@@ -23,3 +23,4 @@ export class UsersController {
     return this.usersService.updateProfile(userId, updateProfileDto);
   }
 }
+

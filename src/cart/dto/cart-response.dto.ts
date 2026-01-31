@@ -33,3 +33,4 @@ export class CartItemResponseDto {
   itemPrice!: number;  // basePrice + material.price
   lineTotal!: number;  // itemPrice * quantity
 }
+

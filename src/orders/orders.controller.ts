@@ -12,7 +12,7 @@ import {
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { users_role as Role } from '@prisma/client';
 import { Request } from 'express';
 
 interface RequestWithUser extends Request {
@@ -117,3 +117,5 @@ export class OrdersController {
     return this.ordersService.getOrder(userId, orderId);
   }
 }
+
+

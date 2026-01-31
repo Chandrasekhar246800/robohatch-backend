@@ -12,3 +12,4 @@ import { MaterialsModule } from '../materials/materials.module';
   exports: [ProductsService],
 })
 export class ProductsModule {}
+

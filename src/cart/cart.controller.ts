@@ -14,7 +14,7 @@ import { CartService } from './cart.service';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { UpdateCartItemDto } from './dto/update-cart-item.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { users_role as Role } from '@prisma/client';
 import { Request } from 'express';
 
 interface RequestWithUser extends Request {
@@ -103,3 +103,5 @@ export class CartController {
     return this.cartService.removeItem(userId, itemId);
   }
 }
+
+

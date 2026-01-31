@@ -21,3 +21,4 @@ export class AddToCartDto {
   @Min(1, { message: 'Quantity must be at least 1' })
   quantity: number = 1;
 }
+

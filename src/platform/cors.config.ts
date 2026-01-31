@@ -52,3 +52,4 @@ export const getCorsConfig = (isDevelopment: boolean): CorsOptions => {
     exposedHeaders: ['X-Request-Id'],
   };
 };
+

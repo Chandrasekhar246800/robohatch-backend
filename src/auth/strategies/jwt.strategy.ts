@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 import { Strategy } from 'passport-jwt';
 import { UsersService } from '../../users/users.service';
-import { Role } from '@prisma/client';
+import { users_role as Role } from '@prisma/client';
 import { Request } from 'express';
 
 interface JwtPayload {
@@ -52,3 +52,5 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     };
   }
 }
+
+

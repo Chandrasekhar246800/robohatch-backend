@@ -9,3 +9,4 @@ export default registerAs('storage', () => ({
   },
   signedUrlExpiry: parseInt(process.env.SIGNED_URL_EXPIRY_SECONDS || '300', 10), // 5 minutes max
 }));
+

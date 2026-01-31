@@ -13,3 +13,4 @@ export default registerAs('email', () => ({
     address: process.env.EMAIL_FROM_ADDRESS || 'noreply@robohatch.com',
   },
 }));
+

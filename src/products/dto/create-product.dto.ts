@@ -16,3 +16,4 @@ export class CreateProductDto {
   @Min(0)
   basePrice!: number;
 }
+

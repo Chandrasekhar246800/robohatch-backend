@@ -11,3 +11,4 @@ export class CreateMaterialDto {
   @Min(0)
   price!: number;
 }
+

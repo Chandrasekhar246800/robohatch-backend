@@ -20,3 +20,4 @@ export class UpdateProductDto {
   @IsBoolean()
   isActive?: boolean;
 }
+

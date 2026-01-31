@@ -11,7 +11,7 @@ import { FilesService } from './files.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { users_role as Role } from '@prisma/client';
 import { Request } from 'express';
 import { FileResponseDto, DownloadUrlResponseDto } from './dto/file-response.dto';
 
@@ -123,3 +123,5 @@ export class FilesController {
     );
   }
 }
+
+

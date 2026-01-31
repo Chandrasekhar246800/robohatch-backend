@@ -11,7 +11,7 @@ import { AdminOrdersService } from './admin-orders.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role, OrderStatus } from '@prisma/client';
+import { users_role as Role, orders_status as OrderStatus } from '@prisma/client';
 
 @Controller('admin/orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -56,3 +56,4 @@ export class AdminOrdersController {
     return this.adminOrdersService.getOrderById(orderId);
   }
 }
+

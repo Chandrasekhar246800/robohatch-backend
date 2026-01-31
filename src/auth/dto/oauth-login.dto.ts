@@ -5,3 +5,4 @@ export class OAuthLoginDto {
   @IsNotEmpty()
   idToken!: string;
 }
+

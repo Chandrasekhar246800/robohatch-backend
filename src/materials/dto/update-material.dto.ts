@@ -15,3 +15,4 @@ export class UpdateMaterialDto {
   @IsBoolean()
   isActive?: boolean;
 }
+

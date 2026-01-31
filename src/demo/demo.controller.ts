@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { Role } from '@prisma/client';
+import { users_role as Role } from '@prisma/client';
 
 @Controller('demo')
 export class DemoController {
@@ -22,3 +22,5 @@ export class DemoController {
     };
   }
 }
+
+

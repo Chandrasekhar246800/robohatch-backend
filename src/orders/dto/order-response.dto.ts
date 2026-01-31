@@ -1,4 +1,4 @@
-import { OrderStatus } from '@prisma/client';
+import { orders_status as OrderStatus } from '@prisma/client';
 
 /**
  * OrderResponseDto - API Response for order operations
@@ -49,3 +49,4 @@ export class OrderAddressResponseDto {
   postalCode!: string;
   country!: string;
 }
+

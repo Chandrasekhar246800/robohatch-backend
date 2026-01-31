@@ -17,3 +17,4 @@ export const SkipThrottle = () => SetMetadata(THROTTLER_SKIP_KEY, true);
  */
 export const UseThrottler = (name: 'auth' | 'payment' | 'admin' | 'default') =>
   SetMetadata('throttlerName', name);
+

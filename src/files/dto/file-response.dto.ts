@@ -22,3 +22,4 @@ export class DownloadUrlResponseDto {
   downloadUrl!: string;
   expiresIn?: number; // Optional: seconds until expiry
 }
+
