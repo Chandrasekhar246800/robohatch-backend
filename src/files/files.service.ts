@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../common/services/storage.service';
-import { OrderStatus } from '@prisma/client';
+import { orders_status as OrderStatus } from '@prisma/client';
 import { FileResponseDto, DownloadUrlResponseDto } from './dto/file-response.dto';
 
 /**
@@ -213,3 +213,4 @@ export class FilesService {
     }
   }
 }
+

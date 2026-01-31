@@ -44,7 +44,7 @@ export class OrdersService {
    * 7. Return order summary
    */
   async checkout(userId: string): Promise<OrderResponseDto> {
-    const cart = await this.prisma.cart.findFirst({
+    const cart = await this.prisma.carts.findFirst({
       where: { userId },
       include: {
         items: {
@@ -120,7 +120,7 @@ export class OrdersService {
         })),
       });
 
-      await tx.cartItem.deleteMany({
+      await tx.cart_items.deleteMany({
         where: { cartId: cart.id },
       });
 
@@ -202,7 +202,7 @@ export class OrdersService {
     }
 
     // STEP 4: Fetch cart + items
-    const cart = await this.prisma.cart.findFirst({
+    const cart = await this.prisma.carts.findFirst({
       where: { userId },
       include: {
         items: {
@@ -258,7 +258,7 @@ export class OrdersService {
     const total = subtotal; // No taxes/shipping yet
 
     // STEP 8: Fetch address → validate ownership
-    const address = await this.prisma.address.findFirst({
+    const address = await this.prisma.addresses.findFirst({
       where: {
         id: addressId,
         userId,
@@ -304,7 +304,7 @@ export class OrdersService {
       });
 
       // 9.3 Create OrderAddress (snapshot)
-      await tx.orderAddress.create({
+      await tx.order_addresses.create({
         data: {
           orderId: newOrder.id,
           fullName: profile?.fullName || 'N/A',
@@ -319,7 +319,7 @@ export class OrdersService {
       });
 
       // 9.4 Clear cart
-      await tx.cartItem.deleteMany({
+      await tx.cart_items.deleteMany({
         where: { cartId: cart.id },
       });
 
@@ -439,3 +439,8 @@ export class OrdersService {
     };
   }
 }
+
+
+
+
+

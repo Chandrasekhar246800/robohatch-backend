@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { OrderStatus } from '@prisma/client';
+import { orders_status as OrderStatus } from '@prisma/client';
 import {
   AdminOrderResponseDto,
   AdminOrderItemDto,
@@ -139,3 +139,4 @@ export class AdminOrdersService {
     };
   }
 }
+

@@ -4,7 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import { Role } from '@prisma/client';
+import { users_role as Role } from '@prisma/client';
 import { AuditLogService } from '../platform/audit-log.service';
 import { GoogleOAuthService, GoogleTokenPayload } from './oauth/google-oauth.service';
 import { MicrosoftOAuthService, MicrosoftTokenPayload } from './oauth/microsoft-oauth.service';
@@ -353,12 +353,12 @@ export class AuthService {
     // Step 6: Delete old reset tokens for this user + save new one (transaction)
     await this.prisma.$transaction(async (tx) => {
       // Delete old tokens
-      await tx.passwordResetToken.deleteMany({
+      await tx.password_reset_tokens.deleteMany({
         where: { userId: user.id },
       });
 
       // Create new reset token
-      await tx.passwordResetToken.create({
+      await tx.password_reset_tokens.create({
         data: {
           userId: user.id,
           token: hashedToken, // Store hashed
@@ -413,7 +413,7 @@ export class AuthService {
   async resetPassword(token: string, newPassword: string, ip: string): Promise<void> {
     // Step 1 & 2: Find ALL reset tokens and compare hashes
     // (Cannot query by hash directly since bcrypt.compare is needed)
-    const resetTokens = await this.prisma.passwordResetToken.findMany({
+    const resetTokens = await this.prisma.password_reset_tokens.findMany({
       where: {
         expiresAt: { gte: new Date() }, // Only non-expired
         usedAt: null, // Only unused
@@ -506,7 +506,7 @@ export class AuthService {
       });
 
       // 8.2 Mark reset token as used
-      await tx.passwordResetToken.update({
+      await tx.password_reset_tokens.update({
         where: { id: matchedResetToken.id },
         data: { usedAt: new Date() },
       });
@@ -522,3 +522,8 @@ export class AuthService {
     });
   }
 }
+
+
+
+
+

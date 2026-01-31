@@ -9,11 +9,11 @@ export class AddressesService {
 
   async create(userId: string, createAddressDto: CreateAddressDto) {
     // If this is the first address, make it default
-    const existingAddresses = await this.prisma.address.count({
+    const existingAddresses = await this.prisma.addresses.count({
       where: { userId },
     });
 
-    return this.prisma.address.create({
+    return this.prisma.addresses.create({
       data: {
         ...createAddressDto,
         userId,
@@ -35,7 +35,7 @@ export class AddressesService {
   }
 
   async findAll(userId: string) {
-    return this.prisma.address.findMany({
+    return this.prisma.addresses.findMany({
       where: { userId },
       select: {
         id: true,
@@ -57,7 +57,7 @@ export class AddressesService {
   }
 
   async findOne(addressId: string, userId: string) {
-    const address = await this.prisma.address.findFirst({
+    const address = await this.prisma.addresses.findFirst({
       where: { 
         id: addressId,
         userId,
@@ -85,7 +85,7 @@ export class AddressesService {
 
   async update(addressId: string, userId: string, updateAddressDto: UpdateAddressDto) {
     // Verify ownership FIRST - Critical security requirement
-    const address = await this.prisma.address.findFirst({
+    const address = await this.prisma.addresses.findFirst({
       where: { 
         id: addressId,
         userId,
@@ -100,7 +100,7 @@ export class AddressesService {
     if (updateAddressDto.isDefault === true && !address.isDefault) {
       return this.prisma.$transaction(async (tx) => {
         // Remove default from all other addresses
-        await tx.address.updateMany({
+        await tx.addresses.updateMany({
           where: { 
             userId,
             isDefault: true,
@@ -109,7 +109,7 @@ export class AddressesService {
         });
 
         // Set this address as default
-        return tx.address.update({
+        return tx.addresses.update({
           where: { id: addressId },
           data: updateAddressDto,
           select: {
@@ -129,7 +129,7 @@ export class AddressesService {
     }
 
     // Regular update without default change
-    return this.prisma.address.update({
+    return this.prisma.addresses.update({
       where: { id: addressId },
       data: updateAddressDto,
       select: {
@@ -149,7 +149,7 @@ export class AddressesService {
 
   async remove(addressId: string, userId: string) {
     // Verify ownership FIRST - Critical security requirement
-    const address = await this.prisma.address.findFirst({
+    const address = await this.prisma.addresses.findFirst({
       where: { 
         id: addressId,
         userId,
@@ -164,25 +164,25 @@ export class AddressesService {
     if (address.isDefault) {
       await this.prisma.$transaction(async (tx) => {
         // Delete the address
-        await tx.address.delete({
+        await tx.addresses.delete({
           where: { id: addressId },
         });
 
         // Find the next address and make it default
-        const nextAddress = await tx.address.findFirst({
+        const nextAddress = await tx.addresses.findFirst({
           where: { userId },
           orderBy: { createdAt: 'asc' },
         });
 
         if (nextAddress) {
-          await tx.address.update({
+          await tx.addresses.update({
             where: { id: nextAddress.id },
             data: { isDefault: true },
           });
         }
       });
     } else {
-      await this.prisma.address.delete({
+      await this.prisma.addresses.delete({
         where: { id: addressId },
       });
     }
@@ -190,3 +190,6 @@ export class AddressesService {
     return { message: 'Address deleted successfully' };
   }
 }
+
+
+

@@ -34,12 +34,12 @@ export class CartService {
    * OWNERSHIP: Uses userId from JWT
    */
   private async getOrCreateCart(userId: string) {
-    let cart = await this.prisma.cart.findFirst({
+    let cart = await this.prisma.carts.findFirst({
       where: { userId },
     });
 
     if (!cart) {
-      cart = await this.prisma.cart.create({
+      cart = await this.prisma.carts.create({
         data: { userId },
       });
     }
@@ -96,7 +96,7 @@ export class CartService {
 
     // Use transaction to handle duplicate items atomically
     await this.prisma.$transaction(async (tx) => {
-      const existingItem = await tx.cartItem.findFirst({
+      const existingItem = await tx.cart_items.findFirst({
         where: {
           cartId: cart.id,
           productId: productId,
@@ -105,7 +105,7 @@ export class CartService {
       });
 
       if (existingItem) {
-        await tx.cartItem.update({
+        await tx.cart_items.update({
           where: { id: existingItem.id },
           data: {
             quantity: existingItem.quantity + quantity,
@@ -113,7 +113,7 @@ export class CartService {
           },
         });
       } else {
-        await tx.cartItem.create({
+        await tx.cart_items.create({
           data: {
             cartId: cart.id,
             productId: productId,
@@ -145,7 +145,7 @@ export class CartService {
     const cart = await this.getOrCreateCart(userId);
 
     // Fetch all cart items with related product and material
-    const cartItems = await this.prisma.cartItem.findMany({
+    const cartItems = await this.prisma.cart_items.findMany({
       where: { cartId: cart.id },
       include: {
         product: true,
@@ -190,7 +190,7 @@ export class CartService {
 
     // Remove deactivated items in batch
     if (itemsToRemove.length > 0) {
-      await this.prisma.cartItem.deleteMany({
+      await this.prisma.cart_items.deleteMany({
         where: {
           id: { in: itemsToRemove },
         },
@@ -228,7 +228,7 @@ export class CartService {
     const cart = await this.getOrCreateCart(userId);
 
     // Verify cart item exists
-    const cartItem = await this.prisma.cartItem.findUnique({
+    const cartItem = await this.prisma.cart_items.findUnique({
       where: { id: itemId },
       include: { cart: true },
     });
@@ -243,7 +243,7 @@ export class CartService {
     }
 
     // Update quantity atomically
-    await this.prisma.cartItem.update({
+    await this.prisma.cart_items.update({
       where: { id: itemId },
       data: {
         quantity: quantity,
@@ -268,7 +268,7 @@ export class CartService {
     const cart = await this.getOrCreateCart(userId);
 
     // Verify cart item exists
-    const cartItem = await this.prisma.cartItem.findUnique({
+    const cartItem = await this.prisma.cart_items.findUnique({
       where: { id: itemId },
       include: { cart: true },
     });
@@ -283,7 +283,7 @@ export class CartService {
     }
 
     // Hard delete cart item
-    await this.prisma.cartItem.delete({
+    await this.prisma.cart_items.delete({
       where: { id: itemId },
     });
 
@@ -291,3 +291,7 @@ export class CartService {
     return this.getCart(userId);
   }
 }
+
+
+
+

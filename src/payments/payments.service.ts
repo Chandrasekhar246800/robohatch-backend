@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RazorpayService } from './razorpay.service';
-import { OrderStatus, PaymentStatus, PaymentGateway } from '@prisma/client';
+import { orders_status as OrderStatus, payments_status as PaymentStatus, payments_gateway as PaymentGateway } from '@prisma/client';
 import { InitiatePaymentResponseDto } from './dto/initiate-payment.response.dto';
 import { InvoicesService } from '../invoices/invoices.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -326,4 +326,5 @@ export class PaymentsService {
     };
   }
 }
+
 

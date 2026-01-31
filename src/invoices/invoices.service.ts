@@ -28,7 +28,7 @@ export class InvoicesService {
   async generateInvoice(orderId: string): Promise<void> {
     try {
       // Check if invoice already exists (idempotency)
-      const existingInvoice = await this.prisma.invoice.findUnique({
+      const existingInvoice = await this.prisma.invoices.findUnique({
         where: { orderId },
       });
 
@@ -71,7 +71,7 @@ export class InvoicesService {
       await this.createPDF(order, invoiceNumber, filePath);
 
       // Store invoice metadata in database
-      await this.prisma.invoice.create({
+      await this.prisma.invoices.create({
         data: {
           orderId,
           invoiceNumber,
@@ -97,7 +97,7 @@ export class InvoicesService {
     
     // Get count of invoices today
     const startOfDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    const count = await this.prisma.invoice.count({
+    const count = await this.prisma.invoices.count({
       where: {
         issuedAt: {
           gte: startOfDay,
@@ -260,7 +260,7 @@ export class InvoicesService {
    * Returns invoice metadata with download URL
    */
   async getInvoiceByOrderId(orderId: string, userId: string) {
-    const invoice = await this.prisma.invoice.findUnique({
+    const invoice = await this.prisma.invoices.findUnique({
       where: { orderId },
       include: {
         order: {
@@ -296,7 +296,7 @@ export class InvoicesService {
    * Get invoice by order ID (Admin access - no user check)
    */
   async getInvoiceByOrderIdAdmin(orderId: string) {
-    const invoice = await this.prisma.invoice.findUnique({
+    const invoice = await this.prisma.invoices.findUnique({
       where: { orderId },
       include: {
         order: {
@@ -330,3 +330,5 @@ export class InvoicesService {
     return path.join(this.invoicesDir, fileName);
   }
 }
+
+

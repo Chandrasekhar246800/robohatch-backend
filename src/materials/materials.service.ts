@@ -19,7 +19,7 @@ export class MaterialsService {
 
     // SAFEGUARD: Prevent duplicate material names per product
     // This avoids cart ambiguity in Phase 5 (e.g., "Which PLA material?")
-    const existingMaterial = await this.prisma.material.findFirst({
+    const existingMaterial = await this.prisma.materials.findFirst({
       where: {
         productId,
         name: createMaterialDto.name,
@@ -32,7 +32,7 @@ export class MaterialsService {
       );
     }
 
-    return this.prisma.material.create({
+    return this.prisma.materials.create({
       data: {
         ...createMaterialDto,
         productId,
@@ -50,7 +50,7 @@ export class MaterialsService {
   }
 
   async findByProduct(productId: string, includeInactive = false) {
-    return this.prisma.material.findMany({
+    return this.prisma.materials.findMany({
       where: {
         productId,
         ...(includeInactive ? {} : { isActive: true }),
@@ -68,7 +68,7 @@ export class MaterialsService {
   }
 
   async update(materialId: string, updateMaterialDto: UpdateMaterialDto) {
-    const material = await this.prisma.material.findUnique({
+    const material = await this.prisma.materials.findUnique({
       where: { id: materialId },
     });
 
@@ -76,7 +76,7 @@ export class MaterialsService {
       throw new NotFoundException('Material not found');
     }
 
-    return this.prisma.material.update({
+    return this.prisma.materials.update({
       where: { id: materialId },
       data: updateMaterialDto,
       select: {
@@ -91,7 +91,7 @@ export class MaterialsService {
   }
 
   async remove(materialId: string) {
-    const material = await this.prisma.material.findUnique({
+    const material = await this.prisma.materials.findUnique({
       where: { id: materialId },
     });
 
@@ -100,7 +100,7 @@ export class MaterialsService {
     }
 
     // Soft delete
-    return this.prisma.material.update({
+    return this.prisma.materials.update({
       where: { id: materialId },
       data: { isActive: false },
       select: {
@@ -111,3 +111,5 @@ export class MaterialsService {
     });
   }
 }
+
+

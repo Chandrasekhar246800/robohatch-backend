@@ -39,3 +39,4 @@ export class HealthService {
     return Math.floor((Date.now() - this.startTime.getTime()) / 1000);
   }
 }
+
