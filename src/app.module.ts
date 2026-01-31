@@ -20,6 +20,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { InvoicesModule } from './invoices/invoices.module';
 import { FilesModule } from './files/files.module';
 import { ShipmentsModule } from './shipments/shipments.module';
+import { CustomFilesModule } from './custom-files/custom-files.module';
 import { PlatformModule } from './platform/platform.module'; // Phase 13
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
@@ -69,6 +70,7 @@ import { envValidationSchema } from './config/env.validation';
     InvoicesModule, // Phase 10: Invoice Generation
     FilesModule, // Phase 11: Secure File Delivery
     ShipmentsModule, // Phase 12: Fulfillment & Shipping Management
+    CustomFilesModule, // Custom File Upload via Email
     DemoModule,
   ],
   providers: [

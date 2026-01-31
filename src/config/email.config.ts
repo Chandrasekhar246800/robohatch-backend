@@ -12,5 +12,6 @@ export default registerAs('email', () => ({
     name: process.env.EMAIL_FROM_NAME || 'RoboHatch',
     address: process.env.EMAIL_FROM_ADDRESS || 'noreply@robohatch.com',
   },
+  adminEmail: process.env.ADMIN_EMAIL,
 }));
 

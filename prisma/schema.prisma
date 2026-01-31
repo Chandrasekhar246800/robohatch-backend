@@ -237,6 +237,21 @@ model shipments {
   order          Order            @relation(fields: [orderId], references: [id])
 }
 
+model custom_file_requests {
+  id         String   @id @default(cuid())
+  userId     String
+  productId  String
+  filename   String
+  fileSize   Int
+  mimeType   String
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@index([productId])
+  @@index([createdAt])
+}
+
 enum orders_status {
   CREATED
   PAYMENT_PENDING
